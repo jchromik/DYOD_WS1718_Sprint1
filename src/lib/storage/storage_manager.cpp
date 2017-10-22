@@ -9,42 +9,44 @@
 
 namespace opossum {
 
-StorageManager* StorageManager::storageManager;
-std::map<std::string, std::shared_ptr<Table>> tables;
-
 StorageManager& StorageManager::get() {
-  return *storageManager;
+  static StorageManager _singleton;
+  return _singleton;
 }
 
 void StorageManager::add_table(const std::string& name, std::shared_ptr<Table> table) {
-  tables.insert(std::make_pair(name, table));
+  if (has_table(name)) {
+    throw std::runtime_error("Table already exists");
+  }
+  _tables.insert(std::pair<std::string, std::shared_ptr<Table>>(name, table));
 }
 
 void StorageManager::drop_table(const std::string& name) {
   check_table_existence(name);
-  tables.erase(name);
+  _tables.erase(name);
 }
 
 std::shared_ptr<Table> StorageManager::get_table(const std::string& name) const {
   check_table_existence(name);
-  return tables.find(name)->second;
+  return _tables.at(name);
 }
 
 bool StorageManager::has_table(const std::string& name) const {
-  return tables.find(name) != tables.end();
+  return _tables.count(name) != 0;
 }
 
 std::vector<std::string> StorageManager::table_names() const {
-  std::vector<std::string> table_names;
-  for(auto const& t : tables)
-    table_names.push_back(t.first);
-  return table_names;
+  std::vector<std::string> names;
+  for(auto it = _tables.begin(); it != _tables.end(); ++it) {
+    names.push_back(it->first);
+  }
+  return names;
 }
 
 void StorageManager::print(std::ostream& out) const {
   printHeader(out);
-  for(auto const& t : tables) {
-    printTableInformation(out, t.first, t.second);
+  for(auto it = _tables.begin(); it != _tables.end(); ++it) {
+    printTableInformation(out, it->first, it->second);
   }
 }
 
@@ -52,7 +54,10 @@ void StorageManager::printTableInformation(std::ostream &out,
                                            const std::string &name,
                                            const std::shared_ptr<Table> &table) const {
   std::stringstream line;
-  line << name << " (" << table->col_count() << ", " << table->row_count() << ", " << table->chunk_count() << ")\n";
+  line << name << " ("
+       << table->col_count() << ", "
+       << table->row_count() << ", "
+       << table->chunk_count() << ")\n";
   out.write(line.str().c_str(), line.str().size());
 }
 
@@ -62,15 +67,14 @@ void StorageManager::printHeader(std::ostream &out) const {
 }
 
 void StorageManager::reset() {
-// TODO: reset the storage manager itself instead of just clearing table
-//  delete StorageManager::storageManager;
-//  *StorageManager::storageManager = StorageManager();
-  tables.clear();
+  // write the new instance returned by StorageManager() to the address returned by get()
+  get() = StorageManager();
 }
 
 void StorageManager::check_table_existence(const std::string& name) const {
-  if (!has_table(name))
+  if (!has_table(name)) {
     throw std::runtime_error("No such table");
+  }
 }
 
 }  // namespace opossum

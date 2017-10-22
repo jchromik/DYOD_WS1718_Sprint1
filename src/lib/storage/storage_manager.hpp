@@ -13,8 +13,6 @@ namespace opossum {
 
 // The StorageManager is a singleton that maintains all tables
 // by mapping table names to table instances.
-
-extern std::map<std::string, std::shared_ptr<Table>> tables;
 class StorageManager : private Noncopyable {
  public:
   static StorageManager& get();
@@ -46,12 +44,12 @@ class StorageManager : private Noncopyable {
   StorageManager() {}
   StorageManager& operator=(StorageManager&&) = default;
 
- private:
-  static StorageManager* storageManager;
   void check_table_existence(const std::string& name) const;
   void printHeader(std::ostream &out) const;
   void printTableInformation(std::ostream &out,
                              const std::string &name,
                              const std::shared_ptr<Table> &table) const;
+
+    std::map<std::string, std::shared_ptr<Table>> _tables;
 };
 }  // namespace opossum
