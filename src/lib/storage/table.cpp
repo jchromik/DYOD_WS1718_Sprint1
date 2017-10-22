@@ -101,7 +101,11 @@ Chunk& Table::get_chunk(ChunkID chunk_id) {
 }
 
 const Chunk& Table::get_chunk(ChunkID chunk_id) const {
-  return get_chunk(chunk_id);
+//  return get_chunk(chunk_id);
+  if (_chunks.size() <= static_cast<size_t>(chunk_id)) {
+    throw std::runtime_error("Chunk does not exist");
+  }
+  return _chunks.at(chunk_id);
 }
 
 }  // namespace opossum
