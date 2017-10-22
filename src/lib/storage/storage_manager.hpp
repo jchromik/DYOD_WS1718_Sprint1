@@ -44,6 +44,8 @@ class StorageManager : private Noncopyable {
   StorageManager() {}
   StorageManager& operator=(StorageManager&&) = default;
 
+  void check_table_existence(const std::string& name) const;
+
   std::map<std::string, std::shared_ptr<Table>> _tables;
 };
 }  // namespace opossum

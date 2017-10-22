@@ -22,16 +22,12 @@ void StorageManager::add_table(const std::string& name, std::shared_ptr<Table> t
 }
 
 void StorageManager::drop_table(const std::string& name) {
-  if (!has_table(name)) {
-    throw std::runtime_error("Table does not exists");
-  }
+  check_table_existence(name);
   _tables.erase(name);
 }
 
 std::shared_ptr<Table> StorageManager::get_table(const std::string& name) const {
-  if (!has_table(name)) {
-    throw std::runtime_error("Table does not exists");
-  }
+  check_table_existence(name);
   return _tables.at(name);
 }
 
@@ -62,6 +58,12 @@ void StorageManager::print(std::ostream& out) const {
 void StorageManager::reset() {
   // write the new instance returned by StorageManager() to the address returned by get()
   get() = StorageManager();
+}
+
+void StorageManager::check_table_existence(const std::string& name) const {
+  if (!has_table(name)) {
+    throw std::runtime_error("No such table");
+  }
 }
 
 }  // namespace opossum
