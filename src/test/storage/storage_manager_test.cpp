@@ -50,6 +50,14 @@ namespace opossum {
    EXPECT_EQ(sm.has_table("first_table"), true);
  }
 
+ TEST_F(StorageStorageManagerTest, TableNames) {
+   auto& sm = StorageManager::get();
+   std::vector<std::string> expected;
+   expected.push_back("first_table");
+   expected.push_back("second_table");
+   EXPECT_EQ(sm.table_names(), expected);
+ }
+
  TEST_F(StorageStorageManagerTest, Print) {
       auto& sm = StorageManager::get();
       sm.print(std::cout);

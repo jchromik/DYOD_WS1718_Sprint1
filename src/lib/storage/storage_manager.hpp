@@ -49,5 +49,9 @@ class StorageManager : private Noncopyable {
  private:
   static StorageManager* storageManager;
   void check_table_existence(const std::string& name) const;
+  void printHeader(std::ostream &out) const;
+  void printTableInformation(std::ostream &out,
+                             const std::string &name,
+                             const std::shared_ptr<Table> &table) const;
 };
 }  // namespace opossum

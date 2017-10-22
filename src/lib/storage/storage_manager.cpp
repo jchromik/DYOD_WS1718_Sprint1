@@ -42,12 +42,23 @@ std::vector<std::string> StorageManager::table_names() const {
 }
 
 void StorageManager::print(std::ostream& out) const {
-  std::string line_break = "\n";
-  for (const std::string &t_name : table_names()) {
-    out.write(t_name.c_str(), t_name.size());
-    out.write(line_break.c_str(), line_break.size());
+  printHeader(out);
+  for(auto const& t : tables) {
+    printTableInformation(out, t.first, t.second);
   }
-  // Implementation goes here
+}
+
+void StorageManager::printTableInformation(std::ostream &out,
+                                           const std::string &name,
+                                           const std::shared_ptr<Table> &table) const {
+  std::stringstream line;
+  line << name << " (" << table->col_count() << ", " << table->row_count() << ", " << table->chunk_count() << ")\n";
+  out.write(line.str().c_str(), line.str().size());
+}
+
+void StorageManager::printHeader(std::ostream &out) const {
+  std::string header = "Table Name (#Columns, #Rows, #Chunks)\n";
+  out.write(header.c_str(), header.size());
 }
 
 void StorageManager::reset() {
