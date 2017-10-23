@@ -27,7 +27,7 @@ class Table : private Noncopyable {
   explicit Table(const uint32_t chunk_size = 0) {
     _chunk_size = chunk_size;
     _chunks.push_back(Chunk());
-  };
+  }
 
   // we need to explicitly set the move constructor to default when
   // we overwrite the copy constructor

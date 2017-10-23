@@ -16,7 +16,6 @@ namespace opossum {
 template <typename T>
 const AllTypeVariant ValueColumn<T>::operator[](const size_t i) const {
   PerformanceWarning("operator[] used");
-
   return _entries.at(i);
 }
 

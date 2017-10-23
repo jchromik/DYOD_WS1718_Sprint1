@@ -1,4 +1,6 @@
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "../base_test.hpp"
 #include "gtest/gtest.h"
@@ -59,8 +61,8 @@ TEST_F(StorageStorageManagerTest, TableNames) {
 }
 
 TEST_F(StorageStorageManagerTest, Print) {
-     auto& sm = StorageManager::get();
-     sm.print(std::cout);
+  auto& sm = StorageManager::get();
+  sm.print(std::cout);
 }
 
 }  // namespace opossum

@@ -31,13 +31,11 @@ std::shared_ptr<Table> StorageManager::get_table(const std::string& name) const 
   return _tables.at(name);
 }
 
-bool StorageManager::has_table(const std::string& name) const {
-  return _tables.count(name) != 0;
-}
+bool StorageManager::has_table(const std::string& name) const { return _tables.count(name) != 0; }
 
 std::vector<std::string> StorageManager::table_names() const {
   std::vector<std::string> names;
-  for(auto it = _tables.begin(); it != _tables.end(); ++it) {
+  for (auto it = _tables.begin(); it != _tables.end(); ++it) {
     names.push_back(it->first);
   }
   return names;
@@ -45,23 +43,19 @@ std::vector<std::string> StorageManager::table_names() const {
 
 void StorageManager::print(std::ostream& out) const {
   printHeader(out);
-  for(auto it = _tables.begin(); it != _tables.end(); ++it) {
+  for (auto it = _tables.begin(); it != _tables.end(); ++it) {
     printTableInformation(out, it->first, it->second);
   }
 }
 
-void StorageManager::printTableInformation(std::ostream &out,
-                                           const std::string &name,
-                                           const std::shared_ptr<Table> &table) const {
+void StorageManager::printTableInformation(std::ostream& out, const std::string& name,
+                                           const std::shared_ptr<Table>& table) const {
   std::stringstream line;
-  line << name << " ("
-       << table->col_count() << ", "
-       << table->row_count() << ", "
-       << table->chunk_count() << ")\n";
+  line << name << " (" << table->col_count() << ", " << table->row_count() << ", " << table->chunk_count() << ")\n";
   out.write(line.str().c_str(), line.str().size());
 }
 
-void StorageManager::printHeader(std::ostream &out) const {
+void StorageManager::printHeader(std::ostream& out) const {
   std::string header = "Table Name (#Columns, #Rows, #Chunks)\n";
   out.write(header.c_str(), header.size());
 }
