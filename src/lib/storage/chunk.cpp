@@ -30,13 +30,13 @@ void Chunk::append(std::vector<AllTypeVariant> values) {
 
 std::shared_ptr<BaseColumn> Chunk::get_column(ColumnID column_id) const { return _columns.at(column_id); }
 
-uint16_t Chunk::col_count() const { return _columns.size(); }
+uint16_t Chunk::col_count() const { return static_cast<uint16_t>(_columns.size()); }
 
 uint32_t Chunk::size() const {
   if (_columns.empty()) {
     return 0;
   }
-  return _columns.at(0)->size();
+  return static_cast<uint32_t>(_columns.at(0)->size());
 }
 
 }  // namespace opossum
