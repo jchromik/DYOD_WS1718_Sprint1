@@ -33,7 +33,7 @@ std::shared_ptr<BaseColumn> Chunk::get_column(ColumnID column_id) const { return
 uint16_t Chunk::col_count() const { return _columns.size(); }
 
 uint32_t Chunk::size() const {
-  if (_columns.size() == 0) {
+  if (_columns.empty()) {
     return 0;
   }
   return _columns.at(0)->size();

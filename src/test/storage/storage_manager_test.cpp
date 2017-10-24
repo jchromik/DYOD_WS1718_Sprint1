@@ -62,7 +62,10 @@ TEST_F(StorageStorageManagerTest, TableNames) {
 
 TEST_F(StorageStorageManagerTest, Print) {
   auto& sm = StorageManager::get();
-  sm.print(std::cout);
+  std::ostringstream test_stream;
+  sm.print(test_stream);
+  std::string expected = "Table Name (#Columns, #Rows, #Chunks)\nfirst_table (0, 0, 1)\nsecond_table (0, 0, 1)\n";
+  EXPECT_STREQ(test_stream.str().c_str(), expected.c_str());
 }
 
 }  // namespace opossum

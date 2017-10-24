@@ -30,7 +30,7 @@ void Table::add_column(const std::string& name, const std::string& type) {
 }
 
 void Table::append(std::vector<AllTypeVariant> values) {
-  if (_chunks.size() == 0) {
+  if (_chunks.empty()) {
     create_new_chunk();
   }
   if (_chunks.back().size() >= _chunk_size && _chunk_size != 0) {
@@ -41,7 +41,7 @@ void Table::append(std::vector<AllTypeVariant> values) {
 
 void Table::create_new_chunk() {
   _chunks.push_back(Chunk());
-  for (auto type : _coltypes) {
+  for (const auto &type : _coltypes) {
     _chunks.back().add_column(make_shared_by_column_type<BaseColumn, ValueColumn>(type));
   }
 }
