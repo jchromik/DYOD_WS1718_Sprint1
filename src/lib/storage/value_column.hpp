@@ -22,7 +22,7 @@ class ValueColumn : public BaseColumn {
   // return the number of entries
   size_t size() const override;
 
- protected:
+ private:
   std::vector<T> _entries;
 };
 

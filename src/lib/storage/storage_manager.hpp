@@ -17,6 +17,8 @@ class StorageManager : private Noncopyable {
  public:
   static StorageManager& get();
 
+  StorageManager(StorageManager&&) = delete;
+
   // adds a table to the storage manager
   void add_table(const std::string& name, std::shared_ptr<Table> table);
 
@@ -38,18 +40,15 @@ class StorageManager : private Noncopyable {
   // deletes the entire StorageManager and creates a new one, used especially in tests
   static void reset();
 
-  StorageManager(StorageManager&&) = delete;
+ private:
+  std::map<std::string, std::shared_ptr<Table>> _tables;
 
- protected:
   StorageManager() {}
   StorageManager& operator=(StorageManager&&) = default;
 
-  void check_table_existence(const std::string& name) const;
-  void printHeader(std::ostream &out) const;
-  void printTableInformation(std::ostream &out,
-                             const std::string &name,
-                             const std::shared_ptr<Table> &table) const;
+  void _check_table_existence(const std::string& name) const;
 
-    std::map<std::string, std::shared_ptr<Table>> _tables;
+  void _print_header(std::ostream& out) const;
+  void _print_table_information(std::ostream& out, const std::string& name, const std::shared_ptr<Table>& table) const;
 };
 }  // namespace opossum
