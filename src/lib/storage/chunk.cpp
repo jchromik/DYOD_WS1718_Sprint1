@@ -16,7 +16,7 @@ namespace opossum {
 
 void Chunk::add_column(std::shared_ptr<BaseColumn> column) { _columns.push_back(column); }
 
-void Chunk::append(std::vector<AllTypeVariant> values) {
+void Chunk::append(const std::vector<AllTypeVariant>& values) {
   DebugAssert(values.size() == _columns.size(), "Number of values does not match number of columns");
 
   auto val_it = values.begin();

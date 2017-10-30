@@ -17,13 +17,13 @@
 
 namespace opossum {
 
-void Table::_add_column_definition(const std::string& name, const std::string& type) {
+void Table::add_column_definition(const std::string& name, const std::string& type) {
   _col_names.push_back(name);
   _col_types.push_back(type);
 }
 
 void Table::add_column(const std::string& name, const std::string& type) {
-  _add_column_definition(name, type);
+  add_column_definition(name, type);
   for (auto& chunk : _chunks) {
     chunk.add_column(make_shared_by_column_type<BaseColumn, ValueColumn>(type));
   }
@@ -31,12 +31,12 @@ void Table::add_column(const std::string& name, const std::string& type) {
 
 void Table::append(std::vector<AllTypeVariant> values) {
   if (_chunks.back().size() >= _chunk_size && _chunk_size != 0) {
-    _create_new_chunk();
+    create_new_chunk();
   }
   _chunks.back().append(values);
 }
 
-void Table::_create_new_chunk() {
+void Table::create_new_chunk() {
   _chunks.push_back(Chunk());
   for (const auto& type : _col_types) {
     _chunks.back().add_column(make_shared_by_column_type<BaseColumn, ValueColumn>(type));
