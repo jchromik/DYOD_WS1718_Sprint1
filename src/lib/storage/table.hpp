@@ -66,9 +66,6 @@ class Table : private Noncopyable {
   // return the maximum chunk size (cannot exceed ChunkOffset (uint32_t))
   uint32_t chunk_size() const;
 
-  // adds column definition without creating the actual columns
-  void add_column_definition(const std::string& name, const std::string& type);
-
   // adds a column to the end, i.e., right, of the table
   void add_column(const std::string& name, const std::string& type);
 
@@ -76,13 +73,16 @@ class Table : private Noncopyable {
   // note this is slow and not thread-safe and should be used for testing purposes only
   void append(std::vector<AllTypeVariant> values);
 
-  // creates a new chunk and appends it
-  void create_new_chunk();
-
- protected:
-  std::vector<std::string> _colnames;
-  std::vector<std::string> _coltypes;
+ private:
+  std::vector<std::string> _col_names;
+  std::vector<std::string> _col_types;
   std::vector<Chunk> _chunks;
   uint32_t _chunk_size;
+
+  // adds column definition without creating the actual columns
+  void _add_column_definition(const std::string& name, const std::string& type);
+
+  // creates a new chunk and appends it
+  void _create_new_chunk();
 };
 }  // namespace opossum
