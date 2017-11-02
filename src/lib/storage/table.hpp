@@ -87,5 +87,11 @@ class Table : private Noncopyable {
   std::vector<std::string> _col_types;
   std::vector<Chunk> _chunks;
   uint32_t _chunk_size;
+  
+  // compresses a ValueColumn into a DictionaryColumn
+  void compress_chunk(ChunkID chunk_id);
+
+ protected:
+  // Implementation goes here
 };
 }  // namespace opossum
