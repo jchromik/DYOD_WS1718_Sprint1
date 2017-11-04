@@ -8,6 +8,7 @@
 
 #include "all_type_variant.hpp"
 #include "types.hpp"
+#include "type_cast.hpp"
 
 namespace opossum {
 
@@ -26,18 +27,29 @@ class DictionaryColumn : public BaseColumn {
    * Creates a Dictionary column from a given value column.
    */
   explicit DictionaryColumn(const std::shared_ptr<BaseColumn>& base_column) {
-    // build up dictionary
+    // Using dynamic_pointer_cast to go down/across class hierarchy.
+    // (cf: http://en.cppreference.com/w/cpp/memory/shared_ptr/pointer_cast)
+    // Doing this since dictionary compression only works for ValueColumns (for now).
+    const std::shared_ptr<ValueColumn<T>>& value_column_ptr = std::dynamic_pointer_cast<ValueColumn<T>>(base_column);
+    const ValueColumn<T>& value_column = *value_column_ptr;
+    
+    // Build up dictionary.
+    // In this implementation we do not rely on the property of std::sets being sorted,
+    // since this is an implementation detail not part of the specification.
     std::set<T> dict;
-    for(size_t i = 0; i < base_column->size(); ++i) {
-      dict.insert(base_column.get()[i]);
+    for(size_t i = 0; i < value_column.size(); ++i) {
+      dict.insert(type_cast<T>(value_column[i]));
     }
-    _dictionary = std::vector(dict.begin(), dict.end());
-    std::sort(_dictionary.begin(), _dictionary.end());
+    _dictionary = std::make_shared<std::vector<T>>(dict.begin(), dict.end());
+    std::sort(_dictionary->begin(), _dictionary->end());
 
-    // fill attribute vector
-    for(size_t i = 0; i < base_column->size(); ++i) {
-      std::find(_dictionary.begin(), _dictionary.end(), base_column.get()[i]);
-      // TODO
+    // Fill attribute vector.
+    _attribute_vector = std::make_shared<std::vector<ValueID>>();
+    for(size_t i = 0; i < value_column.size(); ++i) {
+      auto it = std::find(_dictionary->begin(), _dictionary->end(), type_cast<T>(value_column[i]));
+      Assert(it != _dictionary->end(), "Dictionary creation or lookup failed");
+      ValueID value_id = ValueID(it - _dictionary->begin());
+      _attribute_vector->emplace_back(value_id); 
     }
   }
 
@@ -46,8 +58,7 @@ class DictionaryColumn : public BaseColumn {
 
   // return the value at a certain position. If you want to write efficient operators, back off!
   const AllTypeVariant operator[](const size_t i) const override {
-    // TODO: Do we really need this dynamic cast?
-    return dynamic_cast<AllTypeVariant>(_dictionary->at(_attribute_vector->at(i)));
+    return AllTypeVariant(_dictionary->at(_attribute_vector->at(i)));
   }
 
   // return the value at a certain position.
@@ -83,7 +94,7 @@ class DictionaryColumn : public BaseColumn {
   ValueID lower_bound(T value) const {
     for(size_t i = 0; i < _dictionary->size(); ++i) {
       if(_dictionary->at(i) >= value) {
-        return i;
+        return static_cast<ValueID>(i);
       }
     }
     return INVALID_VALUE_ID;
@@ -100,7 +111,7 @@ class DictionaryColumn : public BaseColumn {
   ValueID upper_bound(T value) const {
     for(size_t i = 0; i < _dictionary->size(); ++i) {
       if(_dictionary->at(i) > value) {
-        return i;
+        return static_cast<ValueID>(i);
       }
     }
     return INVALID_VALUE_ID;
@@ -126,7 +137,7 @@ class DictionaryColumn : public BaseColumn {
   std::shared_ptr<std::vector<T>> _dictionary;
   // std::shared_ptr<BaseAttributeVector> _attribute_vector;
   // FOR NOW (=TODO):
-  std::shared_ptr<std::vector<uint64_t>> _attribute_vector;
+  std::shared_ptr<std::vector<ValueID>> _attribute_vector;
 };
 
 }  // namespace opossum
