@@ -9,6 +9,7 @@
 #include "all_type_variant.hpp"
 #include "types.hpp"
 #include "type_cast.hpp"
+#include "value_column.hpp"
 
 namespace opossum {
 
