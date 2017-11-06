@@ -1,12 +1,17 @@
 #pragma once
 
+#include <vector>
+
+#include "types.hpp"
 #include "base_attribute_vector.hpp"
 
 namespace opossum {
 
-template <typename T>
 class FittedAttributeVector : public BaseAttributeVector {
  public:
+
+  explicit FittedAttributeVector(const size_t size) : _entries{size} {}; 
+
   // returns the value at a given position
   ValueID get(const size_t i) const override;
 
@@ -20,7 +25,7 @@ class FittedAttributeVector : public BaseAttributeVector {
   AttributeVectorWidth width() const override;
 
  private:
-  std::vector<T> _entries;
+  std::vector<ValueID> _entries;
 };
 
 } // namespace opossum

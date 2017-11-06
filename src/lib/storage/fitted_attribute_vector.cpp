@@ -2,28 +2,22 @@
 
 namespace opossum {
 
-template <typename T>
-ValueID FittedAttributeVector<T>::get(const size_t i) const {
-  // TODO
-  return ValueID{0};
+ValueID FittedAttributeVector::get(const size_t i) const {
+  return ValueID{_entries.at(i)};
 }
 
-template <typename T>
-void FittedAttributeVector<T>::set(const size_t i, const ValueID value_id) {
-  // TODO
-  return;
+void FittedAttributeVector::set(const size_t i, const ValueID value_id) {
+  _entries.erase(_entries.begin() + i);
+  _entries.emplace(_entries.begin() + i, value_id);
 }
 
-template <typename T>
-size_t FittedAttributeVector<T>::size() const {
-  // TODO
-  return 0;
+size_t FittedAttributeVector::size() const {
+  return _entries.size();
 }
 
-template <typename T>
-AttributeVectorWidth FittedAttributeVector<T>::width() const {
-  // TODO
-  return AttributeVectorWidth{0};
+AttributeVectorWidth FittedAttributeVector::width() const {
+  // TODO: Is this too hacky?
+  return AttributeVectorWidth{8 * sizeof(ValueID)};
 }
 
 } // namespace opossum
