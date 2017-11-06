@@ -40,7 +40,7 @@ class StorageManager : private Noncopyable {
   // deletes the entire StorageManager and creates a new one, used especially in tests
   static void reset();
 
- private:
+ protected:
   std::map<std::string, std::shared_ptr<Table>> _tables;
 
   StorageManager() {}
