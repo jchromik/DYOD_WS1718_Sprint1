@@ -99,7 +99,7 @@ void Table::compress_chunk(ChunkID chunk_id) {
   for(auto i = 0; i < raw_chunk.col_count(); ++i) {
     compressed_chunk.add_column(make_shared_by_column_type<BaseColumn, DictionaryColumn>(_col_types.at(i), raw_chunk.get_column(ColumnID(i))));
   }
-  // TODO: We definitely have to test this. Not sure this is close to correct.
+
   _chunks.erase(_chunks.begin() + chunk_id);
   _chunks.emplace(_chunks.begin() + chunk_id, std::move(compressed_chunk));
 }

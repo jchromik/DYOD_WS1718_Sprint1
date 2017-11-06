@@ -82,14 +82,14 @@ class Table : private Noncopyable {
   // creates a new chunk and appends it
   void create_new_chunk();
 
+  // compresses a ValueColumn into a DictionaryColumn
+  void compress_chunk(ChunkID chunk_id);
+
  private:
   std::vector<std::string> _col_names;
   std::vector<std::string> _col_types;
   std::vector<Chunk> _chunks;
   uint32_t _chunk_size;
-  
-  // compresses a ValueColumn into a DictionaryColumn
-  void compress_chunk(ChunkID chunk_id);
 
  protected:
   // Implementation goes here
