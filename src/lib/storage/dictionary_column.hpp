@@ -7,6 +7,7 @@
 #include <set>
 
 #include "all_type_variant.hpp"
+#include "base_attribute_vector.hpp"
 #include "fitted_attribute_vector.hpp"
 #include "types.hpp"
 #include "type_cast.hpp"
@@ -46,7 +47,14 @@ class DictionaryColumn : public BaseColumn {
     std::sort(_dictionary->begin(), _dictionary->end());
 
     // Fill attribute vector.
-    _attribute_vector = std::make_shared<FittedAttributeVector<uint32_t>>();
+    if(_dictionary->size() <= std::numeric_limits<uint8_t>::max()) {
+      _attribute_vector = std::make_shared<FittedAttributeVector<uint8_t>>();
+    } else if(_dictionary->size() <= std::numeric_limits<uint16_t>::max()) {
+      _attribute_vector = std::make_shared<FittedAttributeVector<uint16_t>>();
+    } else {
+      _attribute_vector = std::make_shared<FittedAttributeVector<uint32_t>>();
+    }
+    
     for(size_t i = 0; i < value_column.size(); ++i) {
       auto it = std::find(_dictionary->begin(), _dictionary->end(), type_cast<T>(value_column[i]));
       Assert(it != _dictionary->end(), "Dictionary creation or lookup failed");
@@ -135,7 +143,7 @@ class DictionaryColumn : public BaseColumn {
 
  protected:
   std::shared_ptr<std::vector<T>> _dictionary;
-  std::shared_ptr<FittedAttributeVector<uint32_t>> _attribute_vector;
+  std::shared_ptr<BaseAttributeVector> _attribute_vector;
 };
 
 }  // namespace opossum
