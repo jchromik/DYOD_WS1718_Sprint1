@@ -58,4 +58,14 @@ TEST_F(StorageValueColumnTest, ThrowsErrorForNonExistingValue) {
   EXPECT_THROW(vc_str[0], std::exception);
 }
 
+TEST_F(StorageValueColumnTest, Values) {
+  vc_str.append("Value01");
+  vc_str.append("Value02");
+  vc_str.append("Value03");
+  std::string result = boost::lexical_cast<std::string>(vc_str.values().at(2));
+  std::string expected = "Value03";
+  EXPECT_STREQ(result.c_str(), expected.c_str());
+  EXPECT_EQ(vc_str.values().size(), 3u);
+}
+
 }  // namespace opossum
