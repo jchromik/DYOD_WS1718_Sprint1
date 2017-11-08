@@ -7,6 +7,7 @@
 #include <set>
 
 #include "all_type_variant.hpp"
+#include "fitted_attribute_vector.hpp"
 #include "types.hpp"
 #include "type_cast.hpp"
 #include "value_column.hpp"
@@ -45,12 +46,12 @@ class DictionaryColumn : public BaseColumn {
     std::sort(_dictionary->begin(), _dictionary->end());
 
     // Fill attribute vector.
-    _attribute_vector = std::make_shared<std::vector<ValueID>>();
+    _attribute_vector = std::make_shared<FittedAttributeVector<uint32_t>>();
     for(size_t i = 0; i < value_column.size(); ++i) {
       auto it = std::find(_dictionary->begin(), _dictionary->end(), type_cast<T>(value_column[i]));
       Assert(it != _dictionary->end(), "Dictionary creation or lookup failed");
       ValueID value_id = ValueID(it - _dictionary->begin());
-      _attribute_vector->emplace_back(value_id); 
+      _attribute_vector->set(i, value_id); 
     }
   }
 
@@ -59,12 +60,12 @@ class DictionaryColumn : public BaseColumn {
 
   // return the value at a certain position. If you want to write efficient operators, back off!
   const AllTypeVariant operator[](const size_t i) const override {
-    return AllTypeVariant(_dictionary->at(_attribute_vector->at(i)));
+    return AllTypeVariant(_dictionary->at(_attribute_vector->get(i)));
   }
 
   // return the value at a certain position.
   const T get(const size_t i) const {
-    return _dictionary->at(_attribute_vector->at(i));
+    return _dictionary->at(_attribute_vector->get(i));
   }
 
   // dictionary columns are immutable
@@ -79,9 +80,7 @@ class DictionaryColumn : public BaseColumn {
   }
 
   // returns an underlying data structure
-  // std::shared_ptr<const BaseAttributeVector> attribute_vector() const;
-  // FOR NOW (=TODO):
-  std::shared_ptr<const std::vector<uint64_t>> attribute_vector() const {
+  std::shared_ptr<const BaseAttributeVector> attribute_vector() const {
     return _attribute_vector;
   }
 
@@ -136,9 +135,7 @@ class DictionaryColumn : public BaseColumn {
 
  protected:
   std::shared_ptr<std::vector<T>> _dictionary;
-  // std::shared_ptr<BaseAttributeVector> _attribute_vector;
-  // FOR NOW (=TODO):
-  std::shared_ptr<std::vector<ValueID>> _attribute_vector;
+  std::shared_ptr<FittedAttributeVector<uint32_t>> _attribute_vector;
 };
 
 }  // namespace opossum
