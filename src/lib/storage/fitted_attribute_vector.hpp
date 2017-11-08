@@ -7,11 +7,10 @@
 
 namespace opossum {
 
+template <typename T>
 class FittedAttributeVector : public BaseAttributeVector {
  public:
-
-  explicit FittedAttributeVector(const size_t size) : _entries{size} {}; 
-
+  
   // returns the value at a given position
   ValueID get(const size_t i) const override;
 
@@ -25,7 +24,7 @@ class FittedAttributeVector : public BaseAttributeVector {
   AttributeVectorWidth width() const override;
 
  private:
-  std::vector<ValueID> _entries;
+  std::vector<T> _entries;
 };
 
 } // namespace opossum
