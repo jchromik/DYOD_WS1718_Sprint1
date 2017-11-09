@@ -94,8 +94,9 @@ TEST_F(StorageTableTest, AddColumnToChunkAlreadyContainingValues) {
   t.append({3, "!"});
   t.add_column("col_3", "int");
   t.append({2, "NewEntry", 3});
-  Chunk c1 = static_cast<Chunk&&>(t.get_chunk(ChunkID{0}));
-  Chunk c2 = static_cast<Chunk&&>(t.get_chunk(ChunkID{1}));
+  Chunk& c1 = t.get_chunk(ChunkID{0});
+  Chunk& c2 = t.get_chunk(ChunkID{1});
+  // all columns should have same number of rows
   EXPECT_EQ(2u, c1.get_column(ColumnID{0})->size());
   EXPECT_EQ(2u, c1.get_column(ColumnID{1})->size());
   EXPECT_EQ(2u, c1.get_column(ColumnID{2})->size());
