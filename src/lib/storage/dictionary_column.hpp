@@ -106,7 +106,7 @@ class DictionaryColumn : public BaseColumn {
     for(size_t i = 0; i < value_column.size(); ++i) {
       dict.insert(type_cast<T>(value_column[i]));
     }
-    _dictionary = std::make_shared<std::vector<T>>(dict.begin(), dict.end());
+    _dictionary = std::make_shared<std::vector<T>>(dict.cbegin(), dict.cend());
     std::sort(_dictionary->begin(), _dictionary->end());
   }
 
@@ -126,7 +126,7 @@ class DictionaryColumn : public BaseColumn {
     for(size_t i = 0; i < value_column.size(); ++i) {
       const auto it = std::find(_dictionary->cbegin(), _dictionary->cend(), type_cast<T>(value_column[i]));
       Assert(it != _dictionary->cend(), "Dictionary creation or lookup failed");
-      const ValueID value_id = ValueID(it - _dictionary->begin());
+      const ValueID value_id = ValueID(it - _dictionary->cbegin());
       _attribute_vector->set(i, value_id); 
     }
   }

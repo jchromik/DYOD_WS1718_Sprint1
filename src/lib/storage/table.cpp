@@ -99,8 +99,8 @@ void Table::compress_chunk(ChunkID chunk_id) {
         make_shared_by_column_type<BaseColumn, DictionaryColumn>(_col_types.at(i), raw_chunk.get_column(ColumnID(i))));
   }
 
-  _chunks.erase(_chunks.begin() + chunk_id);
-  _chunks.emplace(_chunks.begin() + chunk_id, std::move(compressed_chunk));
+  _chunks.erase(_chunks.cbegin() + chunk_id);
+  _chunks.emplace(_chunks.cbegin() + chunk_id, std::move(compressed_chunk));
 }
 
 }  // namespace opossum
