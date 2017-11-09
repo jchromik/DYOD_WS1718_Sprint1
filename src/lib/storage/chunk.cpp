@@ -1,3 +1,5 @@
+#include "chunk.hpp"
+
 #include <iomanip>
 #include <iterator>
 #include <limits>
@@ -8,8 +10,6 @@
 #include <vector>
 
 #include "base_column.hpp"
-#include "chunk.hpp"
-
 #include "utils/assert.hpp"
 
 namespace opossum {

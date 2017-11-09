@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "types.hpp"
 #include "base_attribute_vector.hpp"
+#include "types.hpp"
 
 namespace opossum {
 
