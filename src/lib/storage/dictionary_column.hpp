@@ -36,31 +36,11 @@ class DictionaryColumn : public BaseColumn {
     const std::shared_ptr<ValueColumn<T>>& value_column_ptr = std::dynamic_pointer_cast<ValueColumn<T>>(base_column);
     const ValueColumn<T>& value_column = *value_column_ptr;
     
-    // Build up dictionary.
-    // In this implementation we do not rely on the property of std::sets being sorted,
-    // since this is an implementation detail not part of the specification.
-    std::set<T> dict;
-    for(size_t i = 0; i < value_column.size(); ++i) {
-      dict.insert(type_cast<T>(value_column[i]));
-    }
-    _dictionary = std::make_shared<std::vector<T>>(dict.begin(), dict.end());
-    std::sort(_dictionary->begin(), _dictionary->end());
+    _fill_dictionary(value_column);
 
-    // Fill attribute vector.
-    if(_dictionary->size() <= std::numeric_limits<uint8_t>::max()) {
-      _attribute_vector = std::make_shared<FittedAttributeVector<uint8_t>>();
-    } else if(_dictionary->size() <= std::numeric_limits<uint16_t>::max()) {
-      _attribute_vector = std::make_shared<FittedAttributeVector<uint16_t>>();
-    } else {
-      _attribute_vector = std::make_shared<FittedAttributeVector<uint32_t>>();
-    }
-    
-    for(size_t i = 0; i < value_column.size(); ++i) {
-      auto it = std::find(_dictionary->begin(), _dictionary->end(), type_cast<T>(value_column[i]));
-      Assert(it != _dictionary->end(), "Dictionary creation or lookup failed");
-      ValueID value_id = ValueID(it - _dictionary->begin());
-      _attribute_vector->set(i, value_id); 
-    }
+    _create_attribute_vector(_dictionary->size());
+
+    _fill_attribute_vector(value_column);
   }
 
   // SEMINAR INFORMATION: Since most of these methods depend on the template parameter, you will have to implement
@@ -78,7 +58,6 @@ class DictionaryColumn : public BaseColumn {
 
   // dictionary columns are immutable
   void append(const AllTypeVariant&) override {
-    // TODO: Better do nothing instead of throwing?
     throw std::runtime_error("Can not append to dictionary column");
   }
 
@@ -110,8 +89,7 @@ class DictionaryColumn : public BaseColumn {
 
   // same as lower_bound(T), but accepts an AllTypeVariant
   ValueID lower_bound(const AllTypeVariant& value) const {
-    // TODO: Check if dynamic_cast is really the correct choice here.
-    return lower_bound(dynamic_cast<T>(value));
+    return lower_bound(type_cast<T>(value));
   }
 
   // returns the first value ID that refers to a value > the search value
@@ -127,8 +105,7 @@ class DictionaryColumn : public BaseColumn {
 
   // same as upper_bound(T), but accepts an AllTypeVariant
   ValueID upper_bound(const AllTypeVariant& value) const {
-    // TODO: Check if dynamic_cast is really the correct choice here.
-    return upper_bound(dynamic_cast<T>(value));
+    return upper_bound(type_cast<T>(value));
   }
 
   // return the number of unique_values (dictionary entries)
@@ -144,6 +121,39 @@ class DictionaryColumn : public BaseColumn {
  protected:
   std::shared_ptr<std::vector<T>> _dictionary;
   std::shared_ptr<BaseAttributeVector> _attribute_vector;
+
+  // Build up dictionary
+  // In this implementation we do not rely on the property of std::sets being sorted,
+  // since this is an implementation detail not part of the specification.
+  void _fill_dictionary(const ValueColumn<T>& value_column) {
+    std::set<T> dict;
+    for(size_t i = 0; i < value_column.size(); ++i) {
+      dict.insert(type_cast<T>(value_column[i]));
+    }
+    _dictionary = std::make_shared<std::vector<T>>(dict.begin(), dict.end());
+    std::sort(_dictionary->begin(), _dictionary->end());
+  }
+
+  // Create attribute vector capable of taking num_values entries
+  void _create_attribute_vector(const size_t num_values) {
+    if(num_values <= std::numeric_limits<uint8_t>::max()) {
+      _attribute_vector = std::make_shared<FittedAttributeVector<uint8_t>>();
+    } else if(num_values <= std::numeric_limits<uint16_t>::max()) {
+      _attribute_vector = std::make_shared<FittedAttributeVector<uint16_t>>();
+    } else {
+      _attribute_vector = std::make_shared<FittedAttributeVector<uint32_t>>();
+    }
+  }
+
+  // Fill attribute vector using values from value_column and value ids from dictionary
+  void _fill_attribute_vector(const ValueColumn<T>& value_column) {
+    for(size_t i = 0; i < value_column.size(); ++i) {
+      const auto it = std::find(_dictionary->cbegin(), _dictionary->cend(), type_cast<T>(value_column[i]));
+      Assert(it != _dictionary->cend(), "Dictionary creation or lookup failed");
+      const ValueID value_id = ValueID(it - _dictionary->begin());
+      _attribute_vector->set(i, value_id); 
+    }
+  }
 };
 
 }  // namespace opossum
