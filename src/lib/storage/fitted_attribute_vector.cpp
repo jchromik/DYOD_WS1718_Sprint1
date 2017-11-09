@@ -10,6 +10,9 @@ ValueID FittedAttributeVector<T>::get(const size_t i) const {
   return ValueID(_entries.at(i));
 }
 
+// this implementation can replace values and append
+// if i is not in range [0,_entires.size()] if fails
+// also fails if value_is unrepresentably big
 template <typename T>
 void FittedAttributeVector<T>::set(const size_t i, const ValueID value_id) {
   if(value_id > std::numeric_limits<T>::max()) {
@@ -26,18 +29,18 @@ void FittedAttributeVector<T>::set(const size_t i, const ValueID value_id) {
 }
 
 template <typename T>
-size_t FittedAttributeVector<T>::size() const {
-  return _entries.size();
-}
+size_t FittedAttributeVector<T>::size() const { return _entries.size(); }
 
+// width is returned in bytes, i.e.:
+// uint8_t  -> 1
+// uint16_t -> 2
+// uint32_t -> 4
 template <typename T>
-AttributeVectorWidth FittedAttributeVector<T>::width() const {
-  return AttributeVectorWidth(sizeof(T));
-}
+AttributeVectorWidth FittedAttributeVector<T>::width() const { return AttributeVectorWidth(sizeof(T)); }
 
 template class FittedAttributeVector<uint8_t>;
 template class FittedAttributeVector<uint16_t>;
 template class FittedAttributeVector<uint32_t>;
-// omitting uint64_t because ValueID is uint32_t
+// omitting uint64_t because ValueID is only uint32_t
 
 } // namespace opossum

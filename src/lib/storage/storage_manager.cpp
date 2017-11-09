@@ -58,8 +58,8 @@ void StorageManager::_print_header(std::ostream& out) const {
   out.write(header.c_str(), header.size());
 }
 
+// write the new instance returned by StorageManager() to the address returned by get()
 void StorageManager::reset() {
-  // write the new instance returned by StorageManager() to the address returned by get()
   get() = StorageManager();
 }
 
