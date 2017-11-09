@@ -103,8 +103,8 @@ class DictionaryColumn : public BaseColumn {
   // since this is an implementation detail not part of the specification.
   void _fill_dictionary(const ValueColumn<T>& value_column) {
     std::set<T> dict;
-    for(size_t i = 0; i < value_column.size(); ++i) {
-      dict.insert(type_cast<T>(value_column[i]));
+    for(size_t index = 0; index < value_column.size(); ++index) {
+      dict.insert(type_cast<T>(value_column[index]));
     }
     _dictionary = std::make_shared<std::vector<T>>(dict.cbegin(), dict.cend());
     std::sort(_dictionary->begin(), _dictionary->end());
@@ -123,11 +123,11 @@ class DictionaryColumn : public BaseColumn {
 
   // Fill attribute vector using values from value_column and value ids from dictionary
   void _fill_attribute_vector(const ValueColumn<T>& value_column) {
-    for(size_t i = 0; i < value_column.size(); ++i) {
-      const auto it = std::find(_dictionary->cbegin(), _dictionary->cend(), type_cast<T>(value_column[i]));
+    for(size_t index = 0; index < value_column.size(); ++index) {
+      const auto it = std::find(_dictionary->cbegin(), _dictionary->cend(), type_cast<T>(value_column[index]));
       Assert(it != _dictionary->cend(), "Dictionary creation or lookup failed");
       const ValueID value_id = ValueID(it - _dictionary->cbegin());
-      _attribute_vector->set(i, value_id); 
+      _attribute_vector->set(index, value_id); 
     }
   }
 };

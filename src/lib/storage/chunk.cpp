@@ -18,8 +18,8 @@ void Chunk::add_column(std::shared_ptr<BaseColumn> column) { _columns.push_back(
 
 void Chunk::append(const std::vector<AllTypeVariant>& values) {
   DebugAssert(values.size() == _columns.size(), "Number of values does not match number of columns");
-  for (size_t i = 0; i < values.size(); ++i) {
-    _columns[i]->append(values[i]);
+  for (size_t index = 0; index < values.size(); ++index) {
+    _columns[index]->append(values[index]);
   }
 }
 
