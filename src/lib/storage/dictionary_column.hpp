@@ -79,11 +79,8 @@ class DictionaryColumn : public BaseColumn {
   // returns the first value ID that refers to a value >= the search value
   // returns INVALID_VALUE_ID if all values are smaller than the search value
   ValueID lower_bound(T value) const {
-    for(size_t i = 0; i < _dictionary->size(); ++i) {
-      if(_dictionary->at(i) >= value) {
-        return static_cast<ValueID>(i);
-      }
-    }
+    auto lower = std::lower_bound(_dictionary->cbegin(), _dictionary->cend(), value);
+    if(lower != _dictionary->cend()) { return ValueID(std::distance(_dictionary->cbegin(), lower)); }
     return INVALID_VALUE_ID;
   }
 
@@ -95,11 +92,8 @@ class DictionaryColumn : public BaseColumn {
   // returns the first value ID that refers to a value > the search value
   // returns INVALID_VALUE_ID if all values are smaller than or equal to the search value
   ValueID upper_bound(T value) const {
-    for(size_t i = 0; i < _dictionary->size(); ++i) {
-      if(_dictionary->at(i) > value) {
-        return static_cast<ValueID>(i);
-      }
-    }
+    auto upper = std::upper_bound(_dictionary->cbegin(), _dictionary->cend(), value);
+    if(upper != _dictionary->cend()) { return ValueID(std::distance(_dictionary->cbegin(), upper)); }
     return INVALID_VALUE_ID;
   }
 
