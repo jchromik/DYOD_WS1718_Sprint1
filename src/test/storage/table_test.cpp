@@ -78,7 +78,7 @@ TEST_F(StorageTableTest, CompressChunk) {
 
   t.compress_chunk(ChunkID{0});
   EXPECT_EQ(t.chunk_count(), 2u);
-  
+
   t.compress_chunk(ChunkID{1});
   EXPECT_EQ(t.chunk_count(), 2u);
 
@@ -86,6 +86,22 @@ TEST_F(StorageTableTest, CompressChunk) {
   EXPECT_EQ(t.col_count(), 2u);
 
   EXPECT_THROW(t.append({5, "Foo"}), std::exception);
+}
+
+TEST_F(StorageTableTest, AddColumnToChunkAlreadyContainingValues) {
+  t.append({4, "Hello,"});
+  t.append({6, "world"});
+  t.append({3, "!"});
+  t.add_column("col_3", "int");
+  t.append({2, "NewEntry", 3});
+  Chunk c1 = static_cast<Chunk&&>(t.get_chunk(ChunkID{0}));
+  Chunk c2 = static_cast<Chunk&&>(t.get_chunk(ChunkID{1}));
+  EXPECT_EQ(2u, c1.get_column(ColumnID{0})->size());
+  EXPECT_EQ(2u, c1.get_column(ColumnID{1})->size());
+  EXPECT_EQ(2u, c1.get_column(ColumnID{2})->size());
+  EXPECT_EQ(2u, c2.get_column(ColumnID{0})->size());
+  EXPECT_EQ(2u, c2.get_column(ColumnID{1})->size());
+  EXPECT_EQ(2u, c2.get_column(ColumnID{2})->size());
 }
 
 }  // namespace opossum

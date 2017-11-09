@@ -18,18 +18,15 @@ void StorageManager::add_table(const std::string& name, std::shared_ptr<Table> t
   if (has_table(name)) {
     throw std::runtime_error("Table already exists");
   }
-  _tables.insert({name, table});
+  _tables.emplace(name, table);
 }
 
 void StorageManager::drop_table(const std::string& name) {
-  _check_table_existence(name);
-  _tables.erase(name);
+  size_t erased = _tables.erase(name);
+  DebugAssert(erased != 0, "Table to drop did not exist!");
 }
 
-std::shared_ptr<Table> StorageManager::get_table(const std::string& name) const {
-  _check_table_existence(name);
-  return _tables.at(name);
-}
+std::shared_ptr<Table> StorageManager::get_table(const std::string& name) const { return _tables.at(name); }
 
 bool StorageManager::has_table(const std::string& name) const { return _tables.find(name) != _tables.cend(); }
 
@@ -62,11 +59,4 @@ void StorageManager::_print_header(std::ostream& out) const {
 void StorageManager::reset() {
   get() = StorageManager();
 }
-
-void StorageManager::_check_table_existence(const std::string& name) const {
-  if (!has_table(name)) {
-    throw std::runtime_error("No such table");
-  }
-}
-
 }  // namespace opossum

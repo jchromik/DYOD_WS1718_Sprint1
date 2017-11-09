@@ -27,7 +27,18 @@ void Table::add_column_definition(const std::string& name, const std::string& ty
 void Table::add_column(const std::string& name, const std::string& type) {
   add_column_definition(name, type);
   for (auto& chunk : _chunks) {
-    chunk.add_column(make_shared_by_column_type<BaseColumn, ValueColumn>(type));
+    const std::shared_ptr<BaseColumn>& column_to_add = make_shared_by_column_type<BaseColumn, ValueColumn>(type);
+    initialize_new_column(chunk, column_to_add);
+    chunk.add_column(column_to_add);
+  }
+}
+
+void Table::initialize_new_column(const Chunk& chunk, const std::shared_ptr<BaseColumn>& column_to_add) {
+  // if there are already values in the chunk, initialize the new column accordingly
+  if (chunk.col_count() > 0) {
+    for (ColumnID col = ColumnID{0}; col < chunk.get_column(ColumnID{0})->size(); ++col) {
+      column_to_add->append(AllTypeVariant());
+    }
   }
 }
 
@@ -50,16 +61,16 @@ uint16_t Table::col_count() const { return _col_names.size(); }
 
 uint64_t Table::row_count() const {
   uint64_t row_count = 0;
-  for (auto& chunk : _chunks) {
+  for (const auto& chunk : _chunks) {
     row_count += chunk.size();
   }
   return row_count;
 }
 
-ChunkID Table::chunk_count() const { return static_cast<ChunkID>(_chunks.size()); }
+ChunkID Table::chunk_count() const { return ChunkID{_chunks.size()}; }
 
 ColumnID Table::column_id_by_name(const std::string& column_name) const {
-  for (uint16_t col_index = 0; col_index < col_count(); ++col_index) {
+  for (ColumnID col_index = ColumnID{0}; col_index < col_count(); ++col_index) {
     if (column_name == _col_names.at(col_index)) {
       return ColumnID{col_index};
     }
@@ -71,12 +82,7 @@ uint32_t Table::chunk_size() const { return _chunk_size; }
 
 const std::vector<std::string>& Table::column_names() const { return _col_names; }
 
-const std::string& Table::column_name(ColumnID column_id) const {
-  if (_col_names.size() <= static_cast<size_t>(column_id)) {
-    throw std::runtime_error("Column not found");
-  }
-  return _col_names.at(column_id);
-}
+const std::string& Table::column_name(ColumnID column_id) const { return _col_names.at(column_id); }
 
 const std::string& Table::column_type(ColumnID column_id) const {
   if (_col_types.size() <= static_cast<size_t>(column_id)) {

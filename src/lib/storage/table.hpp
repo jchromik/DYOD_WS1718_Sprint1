@@ -87,5 +87,7 @@ class Table : private Noncopyable {
   std::vector<std::string> _col_types;
   std::vector<Chunk> _chunks;
   const uint32_t _chunk_size;
+
+  void initialize_new_column(const Chunk& chunk, const std::shared_ptr<BaseColumn>& column_to_add);
 };
 }  // namespace opossum
