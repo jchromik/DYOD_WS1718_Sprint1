@@ -54,9 +54,7 @@ TEST_F(StorageValueColumnTest, ReturnsVectorValue) {
   EXPECT_STREQ(result.c_str(), expected.c_str());
 }
 
-TEST_F(StorageValueColumnTest, ThrowsErrorForNonExistingValue) {
-  EXPECT_THROW(vc_str[0], std::exception);
-}
+TEST_F(StorageValueColumnTest, ThrowsErrorForNonExistingValue) { EXPECT_THROW(vc_str[0], std::exception); }
 
 TEST_F(StorageValueColumnTest, Values) {
   vc_str.append("Value01");

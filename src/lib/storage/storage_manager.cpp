@@ -56,7 +56,5 @@ void StorageManager::_print_header(std::ostream& out) const {
 }
 
 // write the new instance returned by StorageManager() to the address returned by get()
-void StorageManager::reset() {
-  get() = StorageManager();
-}
+void StorageManager::reset() { get() = StorageManager(); }
 }  // namespace opossum

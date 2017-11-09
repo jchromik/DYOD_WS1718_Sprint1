@@ -3,9 +3,9 @@
 #include "../base_test.hpp"
 #include "gtest/gtest.h"
 
-#include "../lib/types.hpp"
 #include "../lib/storage/fitted_attribute_vector.hpp"
-  
+#include "../lib/types.hpp"
+
 namespace opossum {
 
 class StorageFittedAttributeVectorTest : public BaseTest {
@@ -13,9 +13,7 @@ class StorageFittedAttributeVectorTest : public BaseTest {
   FittedAttributeVector<uint8_t> fav;
 };
 
-TEST_F(StorageFittedAttributeVectorTest, Width) {
-  EXPECT_EQ(fav.width(), 1u);
-}
+TEST_F(StorageFittedAttributeVectorTest, Width) { EXPECT_EQ(fav.width(), 1u); }
 
 TEST_F(StorageFittedAttributeVectorTest, SetGet) {
   fav.set(0, ValueID(2));
@@ -30,13 +28,9 @@ TEST_F(StorageFittedAttributeVectorTest, SetGet) {
   EXPECT_EQ(fav.get(4), ValueID(32));
 }
 
-TEST_F(StorageFittedAttributeVectorTest, SetOutOfRange) {
-  EXPECT_THROW(fav.set(5, ValueID(2)), std::exception);
-}
+TEST_F(StorageFittedAttributeVectorTest, SetOutOfRange) { EXPECT_THROW(fav.set(5, ValueID(2)), std::exception); }
 
-TEST_F(StorageFittedAttributeVectorTest, GetOutOfRange) {
-  EXPECT_THROW(fav.get(5), std::exception);
-}
+TEST_F(StorageFittedAttributeVectorTest, GetOutOfRange) { EXPECT_THROW(fav.get(5), std::exception); }
 
 TEST_F(StorageFittedAttributeVectorTest, SetAgain) {
   fav.set(0, ValueID(2));
@@ -44,4 +38,4 @@ TEST_F(StorageFittedAttributeVectorTest, SetAgain) {
   EXPECT_EQ(fav.get(0), ValueID(4));
 }
 
-} // namespace opossum
+}  // namespace opossum

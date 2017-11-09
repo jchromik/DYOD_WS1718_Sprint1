@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+#include <limits>
 #include <memory>
 #include <set>
 #include <string>
@@ -9,8 +11,8 @@
 #include "all_type_variant.hpp"
 #include "base_attribute_vector.hpp"
 #include "fitted_attribute_vector.hpp"
-#include "types.hpp"
 #include "type_cast.hpp"
+#include "types.hpp"
 #include "value_column.hpp"
 
 namespace opossum {
@@ -35,7 +37,7 @@ class DictionaryColumn : public BaseColumn {
     // Doing this since dictionary compression only works for ValueColumns (for now).
     const std::shared_ptr<ValueColumn<T>>& value_column_ptr = std::dynamic_pointer_cast<ValueColumn<T>>(base_column);
     const ValueColumn<T>& value_column = *value_column_ptr;
-    
+
     _fill_dictionary(value_column);
 
     _create_attribute_vector(_dictionary->size());
@@ -70,7 +72,9 @@ class DictionaryColumn : public BaseColumn {
   // returns INVALID_VALUE_ID if all values are smaller than the search value
   ValueID lower_bound(T value) const {
     auto lower = std::lower_bound(_dictionary->cbegin(), _dictionary->cend(), value);
-    if(lower != _dictionary->cend()) { return ValueID(std::distance(_dictionary->cbegin(), lower)); }
+    if (lower != _dictionary->cend()) {
+      return ValueID(std::distance(_dictionary->cbegin(), lower));
+    }
     return INVALID_VALUE_ID;
   }
 
@@ -81,7 +85,9 @@ class DictionaryColumn : public BaseColumn {
   // returns INVALID_VALUE_ID if all values are smaller than or equal to the search value
   ValueID upper_bound(T value) const {
     auto upper = std::upper_bound(_dictionary->cbegin(), _dictionary->cend(), value);
-    if(upper != _dictionary->cend()) { return ValueID(std::distance(_dictionary->cbegin(), upper)); }
+    if (upper != _dictionary->cend()) {
+      return ValueID(std::distance(_dictionary->cbegin(), upper));
+    }
     return INVALID_VALUE_ID;
   }
 
@@ -103,7 +109,7 @@ class DictionaryColumn : public BaseColumn {
   // since this is an implementation detail not part of the specification.
   void _fill_dictionary(const ValueColumn<T>& value_column) {
     std::set<T> dict;
-    for(size_t index = 0; index < value_column.size(); ++index) {
+    for (size_t index = 0; index < value_column.size(); ++index) {
       dict.insert(type_cast<T>(value_column[index]));
     }
     _dictionary = std::make_shared<std::vector<T>>(dict.cbegin(), dict.cend());
@@ -112,9 +118,9 @@ class DictionaryColumn : public BaseColumn {
 
   // Create attribute vector capable of taking num_values entries
   void _create_attribute_vector(const size_t num_values) {
-    if(num_values <= std::numeric_limits<uint8_t>::max()) {
+    if (num_values <= std::numeric_limits<uint8_t>::max()) {
       _attribute_vector = std::make_shared<FittedAttributeVector<uint8_t>>();
-    } else if(num_values <= std::numeric_limits<uint16_t>::max()) {
+    } else if (num_values <= std::numeric_limits<uint16_t>::max()) {
       _attribute_vector = std::make_shared<FittedAttributeVector<uint16_t>>();
     } else {
       _attribute_vector = std::make_shared<FittedAttributeVector<uint32_t>>();
@@ -123,11 +129,11 @@ class DictionaryColumn : public BaseColumn {
 
   // Fill attribute vector using values from value_column and value ids from dictionary
   void _fill_attribute_vector(const ValueColumn<T>& value_column) {
-    for(size_t index = 0; index < value_column.size(); ++index) {
+    for (size_t index = 0; index < value_column.size(); ++index) {
       const auto it = std::find(_dictionary->cbegin(), _dictionary->cend(), type_cast<T>(value_column[index]));
       Assert(it != _dictionary->cend(), "Dictionary creation or lookup failed");
       const ValueID value_id = ValueID(it - _dictionary->cbegin());
-      _attribute_vector->set(index, value_id); 
+      _attribute_vector->set(index, value_id);
     }
   }
 };

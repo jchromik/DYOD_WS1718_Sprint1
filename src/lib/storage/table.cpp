@@ -100,9 +100,8 @@ void Table::compress_chunk(ChunkID chunk_id) {
   Chunk& raw_chunk = _chunks.at(chunk_id);
 
   for (auto col_index = 0; col_index < raw_chunk.col_count(); ++col_index) {
-    compressed_chunk.add_column(
-        make_shared_by_column_type<BaseColumn, DictionaryColumn>(_col_types.at(col_index),
-                                                                 raw_chunk.get_column(ColumnID(col_index))));
+    compressed_chunk.add_column(make_shared_by_column_type<BaseColumn, DictionaryColumn>(
+        _col_types.at(col_index), raw_chunk.get_column(ColumnID(col_index))));
   }
 
   _chunks.erase(_chunks.cbegin() + chunk_id);
