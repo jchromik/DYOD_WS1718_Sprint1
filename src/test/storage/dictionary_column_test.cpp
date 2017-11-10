@@ -53,6 +53,15 @@ TEST_F(StorageDictionaryColumnTest, LowerUpperBound) {
 
   EXPECT_EQ(dict_col->lower_bound(15), opossum::INVALID_VALUE_ID);
   EXPECT_EQ(dict_col->upper_bound(15), opossum::INVALID_VALUE_ID);
+
+  EXPECT_EQ(dict_col->lower_bound(opossum::AllTypeVariant(4)), (opossum::ValueID)2);
+  EXPECT_EQ(dict_col->upper_bound(opossum::AllTypeVariant(4)), (opossum::ValueID)3);
+
+  EXPECT_EQ(dict_col->lower_bound(opossum::AllTypeVariant(5)), (opossum::ValueID)3);
+  EXPECT_EQ(dict_col->upper_bound(opossum::AllTypeVariant(5)), (opossum::ValueID)3);
+
+  EXPECT_EQ(dict_col->lower_bound(opossum::AllTypeVariant(15)), opossum::INVALID_VALUE_ID);
+  EXPECT_EQ(dict_col->upper_bound(opossum::AllTypeVariant(15)), opossum::INVALID_VALUE_ID);
 }
 
 TEST_F(StorageDictionaryColumnTest, AttributeVectorWidth) {
@@ -60,6 +69,27 @@ TEST_F(StorageDictionaryColumnTest, AttributeVectorWidth) {
   auto col = opossum::make_shared_by_column_type<opossum::BaseColumn, opossum::DictionaryColumn>("int", vc_int);
   auto dict_col = std::dynamic_pointer_cast<opossum::DictionaryColumn<int>>(col);
   EXPECT_EQ(dict_col->attribute_vector()->width(), 2u);
+}
+
+TEST_F(StorageDictionaryColumnTest, AccessElements) {
+  vc_str->append("Bill");
+  vc_str->append("Steve");
+  vc_str->append("Alexander");
+
+  auto col = opossum::make_shared_by_column_type<opossum::BaseColumn, opossum::DictionaryColumn>("string", vc_str);
+  auto dict_col = std::dynamic_pointer_cast<opossum::DictionaryColumn<std::string>>(col);
+
+  EXPECT_EQ(boost::lexical_cast<std::string>((*dict_col)[0]), "Bill");
+  EXPECT_EQ(boost::lexical_cast<std::string>((*dict_col)[1]), "Steve");
+  EXPECT_EQ(boost::lexical_cast<std::string>((*dict_col)[2]), "Alexander");
+
+  EXPECT_EQ(dict_col->get(0), "Bill");
+  EXPECT_EQ(dict_col->get(1), "Steve");
+  EXPECT_EQ(dict_col->get(2), "Alexander");
+
+  EXPECT_EQ(dict_col->value_by_value_id((opossum::ValueID)0), "Alexander");
+  EXPECT_EQ(dict_col->value_by_value_id((opossum::ValueID)1), "Bill");
+  EXPECT_EQ(dict_col->value_by_value_id((opossum::ValueID)2), "Steve");
 }
 
 // TODO(student): You should add some more tests here (full coverage would be appreciated) and possibly in other files.
