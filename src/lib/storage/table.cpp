@@ -67,7 +67,8 @@ uint64_t Table::row_count() const {
   return row_count;
 }
 
-ChunkID Table::chunk_count() const { return ChunkID{_chunks.size()}; }
+// We need a cast here to avoid a narrowing conversion warning
+ChunkID Table::chunk_count() const { return static_cast<ChunkID>(_chunks.size()); }
 
 ColumnID Table::column_id_by_name(const std::string& column_name) const {
   for (ColumnID col_index = ColumnID{0}; col_index < col_count(); ++col_index) {
