@@ -37,6 +37,8 @@ TEST_F(StorageTableTest, GetChunk) {
   t.append({6, "world"});
   t.append({3, "!"});
   t.get_chunk(ChunkID{1});
+  const auto& chunk = static_cast<const Table&>(t).get_chunk(ChunkID{1});
+  EXPECT_EQ(chunk.size(), 1u);
 }
 
 TEST_F(StorageTableTest, ColCount) { EXPECT_EQ(t.col_count(), 2u); }
