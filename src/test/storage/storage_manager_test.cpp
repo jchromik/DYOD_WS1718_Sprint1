@@ -52,6 +52,12 @@ TEST_F(StorageStorageManagerTest, HasTable) {
   EXPECT_EQ(sm.has_table("first_table"), true);
 }
 
+TEST_F(StorageStorageManagerTest, AddExistingTable) {
+  auto& sm = StorageManager::get();
+  auto table = std::make_shared<Table>();
+  EXPECT_THROW(sm.add_table("first_table", table), std::exception);
+}
+
 TEST_F(StorageStorageManagerTest, TableNames) {
   auto& sm = StorageManager::get();
   std::vector<std::string> expected;

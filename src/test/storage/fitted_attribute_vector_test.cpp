@@ -32,6 +32,10 @@ TEST_F(StorageFittedAttributeVectorTest, SetOutOfRange) { EXPECT_THROW(fav.set(5
 
 TEST_F(StorageFittedAttributeVectorTest, GetOutOfRange) { EXPECT_THROW(fav.get(5), std::exception); }
 
+TEST_F(StorageFittedAttributeVectorTest, SetOutOfNumericLimits) {
+  EXPECT_THROW(fav.set(0, ValueID(std::numeric_limits<uint8_t>::max()+1)), std::exception);
+}
+
 TEST_F(StorageFittedAttributeVectorTest, SetAgain) {
   fav.set(0, ValueID(2));
   fav.set(0, ValueID(4));
