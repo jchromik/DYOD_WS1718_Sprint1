@@ -18,25 +18,22 @@ void StorageManager::add_table(const std::string& name, std::shared_ptr<Table> t
   if (has_table(name)) {
     throw std::runtime_error("Table already exists");
   }
-  _tables.insert(std::pair<std::string, std::shared_ptr<Table>>(name, table));
+  _tables.emplace(name, table);
 }
 
 void StorageManager::drop_table(const std::string& name) {
-  _check_table_existence(name);
-  _tables.erase(name);
+  size_t erased = _tables.erase(name);
+  DebugAssert(erased != 0, "Table to drop did not exist!");
 }
 
-std::shared_ptr<Table> StorageManager::get_table(const std::string& name) const {
-  _check_table_existence(name);
-  return _tables.at(name);
-}
+std::shared_ptr<Table> StorageManager::get_table(const std::string& name) const { return _tables.at(name); }
 
-bool StorageManager::has_table(const std::string& name) const { return _tables.count(name) != 0; }
+bool StorageManager::has_table(const std::string& name) const { return _tables.find(name) != _tables.cend(); }
 
 std::vector<std::string> StorageManager::table_names() const {
   std::vector<std::string> names;
-  for (const auto& _table : _tables) {
-    names.push_back(_table.first);
+  for (const auto& table_entry : _tables) {
+    names.push_back(table_entry.first);
   }
   return names;
 }
@@ -50,9 +47,7 @@ void StorageManager::print(std::ostream& out) const {
 
 void StorageManager::_print_table_information(std::ostream& out, const std::string& name,
                                               const std::shared_ptr<Table>& table) const {
-  std::stringstream line;
-  line << name << " (" << table->col_count() << ", " << table->row_count() << ", " << table->chunk_count() << ")\n";
-  out.write(line.str().c_str(), line.str().size());
+  out << name << " (" << table->col_count() << ", " << table->row_count() << ", " << table->chunk_count() << ")\n";
 }
 
 void StorageManager::_print_header(std::ostream& out) const {
@@ -60,15 +55,6 @@ void StorageManager::_print_header(std::ostream& out) const {
   out.write(header.c_str(), header.size());
 }
 
-void StorageManager::reset() {
-  // write the new instance returned by StorageManager() to the address returned by get()
-  get() = StorageManager();
-}
-
-void StorageManager::_check_table_existence(const std::string& name) const {
-  if (!has_table(name)) {
-    throw std::runtime_error("No such table");
-  }
-}
-
+// write the new instance returned by StorageManager() to the address returned by get()
+void StorageManager::reset() { get() = StorageManager(); }
 }  // namespace opossum
