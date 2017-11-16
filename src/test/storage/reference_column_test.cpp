@@ -96,4 +96,56 @@ TEST_F(ReferenceColumnTest, RetrievesValuesFromChunks) {
   EXPECT_EQ(ref_column[2], column_2[0]);
 }
 
+TEST_F(ReferenceColumnTest, IndexOutOfBounds) {
+  // PosList with (0, 0), (2, 1), (1, 1)
+  auto pos_list = std::make_shared<PosList>(
+      std::initializer_list<RowID>({RowID{ChunkID{0}, 0}, RowID{ChunkID{2}, 1}, RowID{ChunkID{1}, 1}}));
+  auto ref_column = ReferenceColumn(_test_table, ColumnID{0}, pos_list);
+
+  auto& column = *(_test_table->get_chunk(ChunkID{0}).get_column(ColumnID{0}));
+
+  EXPECT_EQ(ref_column[0], column[0]);
+  EXPECT_THROW(ref_column[1], std::exception);
+  EXPECT_THROW(ref_column[2], std::exception);
+  EXPECT_THROW(ref_column[3], std::exception);
+}
+
+TEST_F(ReferenceColumnTest, ColumnIndexOutOfBounds) {
+  // PosList with (0, 0), (0, 1), (0, 2)
+  auto pos_list = std::make_shared<PosList>(
+      std::initializer_list<RowID>({RowID{ChunkID{0}, 0}, RowID{ChunkID{0}, 1}, RowID{ChunkID{1}, 1}}));
+  auto ref_column = ReferenceColumn(_test_table, ColumnID{2}, pos_list);
+
+  EXPECT_THROW(ref_column[0], std::exception);
+  EXPECT_THROW(ref_column[1], std::exception);
+  EXPECT_THROW(ref_column[2], std::exception);
+}
+
+TEST_F(ReferenceColumnTest, GetPositionList) {
+  // PosList with (0, 0), (0, 1), (0, 2)
+  auto pos_list = std::make_shared<PosList>(
+      std::initializer_list<RowID>({RowID{ChunkID{0}, 0}, RowID{ChunkID{0}, 1}, RowID{ChunkID{0}, 2}}));
+  auto ref_column = ReferenceColumn(_test_table, ColumnID{0}, pos_list);
+
+  EXPECT_EQ(ref_column.pos_list(), pos_list);
+}
+
+TEST_F(ReferenceColumnTest, GetTable) {
+  // PosList with (0, 0), (0, 1), (0, 2)
+  auto pos_list = std::make_shared<PosList>(
+      std::initializer_list<RowID>({RowID{ChunkID{0}, 0}, RowID{ChunkID{0}, 1}, RowID{ChunkID{0}, 2}}));
+  auto ref_column = ReferenceColumn(_test_table, ColumnID{0}, pos_list);
+
+  EXPECT_EQ(ref_column.referenced_table(), _test_table);
+}
+
+TEST_F(ReferenceColumnTest, GetColumnID) {
+  // PosList with (0, 0), (0, 1), (0, 2)
+  auto pos_list = std::make_shared<PosList>(
+      std::initializer_list<RowID>({RowID{ChunkID{0}, 0}, RowID{ChunkID{0}, 1}, RowID{ChunkID{0}, 2}}));
+  auto ref_column = ReferenceColumn(_test_table, ColumnID{0}, pos_list);
+
+  EXPECT_EQ(ref_column.referenced_column_id(), ColumnID{0});
+}
+
 }  // namespace opossum
