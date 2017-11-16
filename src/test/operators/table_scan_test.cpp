@@ -131,7 +131,8 @@ namespace opossum {
 // }
 
 // TEST_F(OperatorsTableScanTest, ScanOnDictColumn) {
-//   // we do not need to check for a non existing value, because that happens automatically when we scan the second chunk
+//   // we do not need to check for a non existing value,
+//   // because that happens automatically when we scan the second chunk
 
 //   std::map<ScanType, std::vector<AllTypeVariant>> tests;
 //   tests[ScanType::OpEquals] = {104};
@@ -151,7 +152,8 @@ namespace opossum {
 // }
 
 // TEST_F(OperatorsTableScanTest, ScanOnReferencedDictColumn) {
-//   // we do not need to check for a non existing value, because that happens automatically when we scan the second chunk
+//   // we do not need to check for a non existing value,
+//   // because that happens automatically when we scan the second chunk
 
 //   std::map<ScanType, std::vector<AllTypeVariant>> tests;
 //   tests[ScanType::OpEquals] = {104};
