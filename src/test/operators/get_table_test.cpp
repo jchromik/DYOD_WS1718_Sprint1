@@ -2,14 +2,14 @@
 
 #include "../base_test.hpp"
 
+#include <string>
 #include "operators/get_table.hpp"
 #include "storage/storage_manager.hpp"
 
 namespace opossum {
 // The fixture for testing class GetTable.
 class OperatorsGetTableTest : public BaseTest {
-  protected:
-
+ protected:
   void SetUp() override {
     _test_table = std::make_shared<Table>(2);
     StorageManager::get().add_table("aNiceTestTable", _test_table);

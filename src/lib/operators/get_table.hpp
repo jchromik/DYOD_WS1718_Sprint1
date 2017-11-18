@@ -3,9 +3,9 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <storage/storage_manager.hpp>
 
 #include "abstract_operator.hpp"
+#include "storage/storage_manager.hpp"
 
 namespace opossum {
 
