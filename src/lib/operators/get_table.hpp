@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <storage/storage_manager.hpp>
 
 #include "abstract_operator.hpp"
 
@@ -17,5 +18,11 @@ class GetTable : public AbstractOperator {
 
  protected:
   std::shared_ptr<const Table> _on_execute() override;
+
+ private:
+  StorageManager& storage_manager = StorageManager::get();
+  std::string name_of_table;
+  bool has_table = false;
+  std::shared_ptr<const Table> table_to_retrieve;
 };
 }  // namespace opossum
