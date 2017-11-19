@@ -32,7 +32,8 @@ set(
     utils/assert.hpp
     utils/load_table.cpp
     utils/load_table.hpp
-    operators/get_table.cpp)
+    operators/get_table.cpp
+    operators/table_scan.cpp)
 
 set(
     LIBRARIES

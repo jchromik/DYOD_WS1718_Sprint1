@@ -28,6 +28,12 @@ class TableScan : public AbstractOperator {
 
  protected:
   std::shared_ptr<const Table> _on_execute() override;
+
+ private:
+  const std::shared_ptr<const AbstractOperator> in;
+  const ColumnID col_id;
+  const ScanType type_of_scan;
+  const AllTypeVariant value_to_find;
 };
 
 }  // namespace opossum
