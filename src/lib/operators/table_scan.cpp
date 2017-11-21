@@ -1,10 +1,11 @@
+#include <storage/table.hpp>
 #include "table_scan.hpp"
 
 namespace opossum {
 
 
 TableScan::TableScan(const std::shared_ptr<const AbstractOperator> in, ColumnID column_id,
-                     const ScanType scan_type, const AllTypeVariant search_value) : in(in), col_id(column_id),
+                     const ScanType scan_type, const AllTypeVariant search_value) : AbstractOperator(in), col_id(column_id),
                                                                                     type_of_scan(scan_type),
                                                                                     value_to_find(search_value) {
 
@@ -27,8 +28,14 @@ const AllTypeVariant &TableScan::search_value() const {
 }
 
 std::shared_ptr<const Table> TableScan::_on_execute() {
-  in->execute();
-  std::shared_ptr<const Table> operator_result = in->get_output();
+  std::shared_ptr<const Table> operator_result = _input_table_left();
+
+  auto result_table = std::make_shared<Table>(operator_result->chunk_size());
+  for (ColumnID col_id = ColumnID{0}; col_id < operator_result->col_count(); ++col_id) {
+    const std::string col_type = operator_result->column_type(col_id);
+    const std::string col_name = operator_result->column_name(col_id);
+    result_table->add_column_definition(col_name, col_type);
+  }
 
   // TODO: continue here
 
