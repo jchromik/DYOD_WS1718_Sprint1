@@ -37,8 +37,13 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
     result_table->add_column_definition(col_name, col_type);
   }
 
-  // TODO: continue here
+  for (ChunkID chunk_id = ChunkID{0}; chunk_id < operator_result->chunk_count(); ++chunk_id) {
+    const Chunk &chunk = operator_result->get_chunk(chunk_id);
 
-  return nullptr;
+    // TODO: continue here
+
+  }
+
+  return result_table;
 }
 }  // namespace opossum
