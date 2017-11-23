@@ -34,6 +34,11 @@ const std::vector<T>& ValueColumn<T>::values() const {
   return _entries;
 }
 
+//template <typename T>
+//void ValueColumn<T>::process_column_in_table_scan(const TableScan& table_scan) {
+//  table_scan->process_value_column(*this);
+//}
+
 EXPLICITLY_INSTANTIATE_COLUMN_TYPES(ValueColumn);
 
 }  // namespace opossum

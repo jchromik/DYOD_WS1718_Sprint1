@@ -100,6 +100,10 @@ class DictionaryColumn : public BaseColumn {
   // return the number of entries
   size_t size() const override { return _attribute_vector->size(); }
 
+//  void process_column_in_table_scan(const TableScan& table_scan) override {
+//    table_scan->process_dictionary_column(*this);
+//  }
+
  protected:
   std::shared_ptr<std::vector<T>> _dictionary;
   std::shared_ptr<BaseAttributeVector> _attribute_vector;

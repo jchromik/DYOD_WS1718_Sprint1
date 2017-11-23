@@ -28,5 +28,7 @@ class BaseColumn : private Noncopyable {
 
   // returns the number of values
   virtual size_t size() const = 0;
+
+//  virtual void process_column_in_table_scan(const TableScan& table_scan);
 };
 }  // namespace opossum

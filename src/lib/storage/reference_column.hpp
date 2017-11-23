@@ -35,6 +35,8 @@ class ReferenceColumn : public BaseColumn {
 
   ColumnID referenced_column_id() const;
 
+//  void process_column_in_table_scan(const TableScan& table_scan) override;
+
  protected:
   const std::shared_ptr<const Table> _table;
   const ColumnID _column_id;

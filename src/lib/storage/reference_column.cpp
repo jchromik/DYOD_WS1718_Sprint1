@@ -38,4 +38,8 @@ const std::shared_ptr<const Table> ReferenceColumn::referenced_table() const { r
 
 ColumnID ReferenceColumn::referenced_column_id() const { return _column_id; }
 
+//void ReferenceColumn::process_column_in_table_scan(const TableScan& table_scan) {
+//  table_scan->process_reference_column(*this);
+//}
+
 }  // namespace opossum
