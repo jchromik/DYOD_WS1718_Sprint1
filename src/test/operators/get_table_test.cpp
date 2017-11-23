@@ -1,8 +1,8 @@
 #include <memory>
+#include <string>
 
 #include "../base_test.hpp"
 
-#include <string>
 #include "operators/get_table.hpp"
 #include "storage/storage_manager.hpp"
 
