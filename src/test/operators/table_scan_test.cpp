@@ -19,7 +19,7 @@ namespace opossum {
 class OperatorsTableScanTest : public BaseTest {
   protected:
   void SetUp() override {
-    _table_wrapper = std::make_shared<TableWrapper>(load_table("src/test/tables/int_float.tbl", 2));
+    _table_wrapper = std::make_shared<TableWrapper>(load_table("../src/test/tables/int_float.tbl", 2));
     _table_wrapper->execute();
 
     std::shared_ptr<Table> test_even_dict = std::make_shared<Table>(5);

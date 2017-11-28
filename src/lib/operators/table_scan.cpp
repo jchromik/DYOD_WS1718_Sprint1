@@ -80,7 +80,7 @@ class TemplatedTableScan {
     }
   }
 
-  void process_column(ChunkID chunk_id, const std::shared_ptr<BaseColumn> column) {
+  void process_column(const ChunkID &chunk_id, const std::shared_ptr<BaseColumn> column) {
     auto value_column = std::dynamic_pointer_cast<ValueColumn<T>>(column);
     if (value_column) {
       return process_value_column(chunk_id, value_column);
@@ -99,7 +99,7 @@ class TemplatedTableScan {
     throw std::runtime_error("Unknown column type");
   }
 
-  void process_value_column(const ChunkID &chunk_id, std::shared_ptr<ValueColumn<T>> value_column) {
+  void process_value_column(const ChunkID &chunk_id, const std::shared_ptr<ValueColumn<T>> &value_column) {
     const std::vector<T> &values = value_column.values();
     for (ChunkOffset offset = 0; offset < value_column.size(); ++offset) {
       const T &value = values.at(offset);
@@ -110,11 +110,55 @@ class TemplatedTableScan {
   }
 
   void process_dictionary_column(const ChunkID &chunk_id, std::shared_ptr<DictionaryColumn<T>> dictionary_column) {
-    // TODO
+    const ValueID& pos_of_value_to_find = dictionary_column->lower_bound(value_to_find);
+    for (ChunkOffset chunk_offset{0}; chunk_offset < dictionary_column->size(); ++chunk_offset) {
+      const ValueID& value_id = dictionary_column->attribute_vector()->get(chunk_offset);
+      if (matches_scan_type(value_id, pos_of_value_to_find)) {
+        // TODO: add to result table
+      }
+    }
   }
 
-  void process_reference_column(const ChunkID &chunk_id, std::shared_ptr<ReferenceColumn> reference_column) {
-    // TODO
+  void process_reference_column(const ChunkID &chunk_id, const std::shared_ptr<ReferenceColumn> &reference_column) {
+    auto table = reference_column->referenced_table();
+
+    const std::shared_ptr<const PosList> pos_list = reference_column->pos_list();
+    for (auto iterator = pos_list->cbegin(); iterator != pos_list->cend(); ++iterator) {
+      RowID &row_id = *iterator;
+      const Chunk& chunk = table->get_chunk(row_id.chunk_id);
+      std::shared_ptr<ReferenceColumn> reference_chunk_column = chunk.get_column(reference_column->referenced_column_id());
+
+      process_referenced_column_by_type(reference_chunk_column, row_id);
+    }
+  }
+
+  void process_referenced_column_by_type(const std::shared_ptr<ReferenceColumn> &reference_column, const RowID &row_id) {
+    auto value_column_ptr = std::dynamic_pointer_cast<ValueColumn<T>>(reference_column);
+    if (value_column_ptr) {
+      return process_referenced_value_column(value_column_ptr, row_id);
+    }
+
+    auto dictionary_column_ptr = std::dynamic_pointer_cast<DictionaryColumn<T>>(reference_column);
+    if (dictionary_column_ptr) {
+      return process_referenced_dictionary_column(dictionary_column_ptr, row_id);
+    }
+
+    throw std::runtime_error("Unknown referenced column type");
+  }
+
+  void process_referenced_value_column(const std::shared_ptr<ValueColumn<T>> &value_column, const RowID &row_id) {
+    const auto& value = value_column->values()[row_id.chunk_offset];
+    if (matches_scan_type(value, value_to_find)) {
+      // TODO: add to result table
+    }
+  }
+
+  void process_referenced_dictionary_column(const std::shared_ptr<DictionaryColumn<T>> &dictionary_column, const RowID &row_id) {
+    const auto& value_id = dictionary_column->attribute_vector()->get(row_id.chunk_offset);
+    const auto& value = (*dictionary_column->dictionary()).at(value_id);
+    if (matches_scan_type(value, value_to_find)) {
+      // TODO: add to result table
+    }
   }
 
   std::shared_ptr<const Table> table_to_scan;
