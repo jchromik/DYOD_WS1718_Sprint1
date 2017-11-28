@@ -53,8 +53,13 @@ class TemplatedTableScan {
 
 //    column->process_column_in_table_scan(table_scan);
       process_column(chunk_id, column);
-      // TODO: continue here
+    }
 
+    // can we just add to the first chunk?
+    Chunk& chunk = result_table->get_chunk(ChunkID{0});
+    for (ColumnID column_id{0}; column_id < result_table->col_count(); ++column_id) {
+      auto reference_column = std::make_shared<ReferenceColumn>(table_to_scan, column_id, result);
+      chunk.add_column(reference_column);
     }
 
     return result_table;
@@ -104,17 +109,17 @@ class TemplatedTableScan {
     for (ChunkOffset offset = 0; offset < value_column.size(); ++offset) {
       const T &value = values.at(offset);
       if (matches_scan_type(value, value_to_find)) {
-        // TODO: add to result table
+        result.emplace_back(RowID{chunk_id, offset});
       }
     }
   }
 
   void process_dictionary_column(const ChunkID &chunk_id, std::shared_ptr<DictionaryColumn<T>> dictionary_column) {
     const ValueID& pos_of_value_to_find = dictionary_column->lower_bound(value_to_find);
-    for (ChunkOffset chunk_offset{0}; chunk_offset < dictionary_column->size(); ++chunk_offset) {
-      const ValueID& value_id = dictionary_column->attribute_vector()->get(chunk_offset);
+    for (ChunkOffset offset = 0; offset < dictionary_column->size(); ++offset) {
+      const ValueID& value_id = dictionary_column->attribute_vector()->get(offset);
       if (matches_scan_type(value_id, pos_of_value_to_find)) {
-        // TODO: add to result table
+        result.emplace_back(RowID{chunk_id, offset});
       }
     }
   }
@@ -157,11 +162,12 @@ class TemplatedTableScan {
     const auto& value_id = dictionary_column->attribute_vector()->get(row_id.chunk_offset);
     const auto& value = (*dictionary_column->dictionary()).at(value_id);
     if (matches_scan_type(value, value_to_find)) {
-      // TODO: add to result table
+      result.emplace_back(row_id);
     }
   }
 
   std::shared_ptr<const Table> table_to_scan;
+  PosList result;
   const ColumnID col_id;
   const ScanType type_of_scan;
   const AllTypeVariant value_to_find;
