@@ -6,68 +6,35 @@ namespace opossum {
 
 class TemplatedTableScanBase {
  public:
-  virtual std::shared_ptr<const Table> _on_execute() = 0;
+  explicit TemplatedTableScanBase() = default;
+
+  virtual std::shared_ptr<PosList> _on_execute() = 0;
 };
 
 template<typename T>
-class TemplatedTableScan : TemplatedTableScanBase {
+class TemplatedTableScan : public TemplatedTableScanBase {
   public:
-  TemplatedTableScan(std::shared_ptr<const Table>& table_to_scan, const ColumnID& column_id,
+  explicit TemplatedTableScan(std::shared_ptr<const Table>& table_to_scan, const ColumnID& column_id,
                      const ScanType& scan_type, const AllTypeVariant& search_value,
-                     const TableScan& table_scan) : table_to_scan(table_to_scan),
+                     const TableScan& table_scan) : TemplatedTableScanBase{},
+                                                    table_to_scan(table_to_scan),
                                                     col_id(column_id),
                                                     type_of_scan(scan_type),
                                                     value_to_find(search_value),
-                                                    table_scan(table_scan) {
-
-  }
-
-//void TemplatedTableScan::process_value_column(const ValueColumn<T>& value_column) {
-//  const std::vector<T> &values = value_column.values();
-//  for (ChunkOffset offset = 0; offset < value_column.size(); ++offset) {
-//    const T &value = values.at(offset);
-//    if (matches_scan_type(value, value_to_find)) {
-//      // TODO: add to result table
-//    }
-//  }
-//  // TODO
-//}
-//
-//void TemplatedTableScan::process_dictionary_column(const DictionaryColumn& dictionary_column) {
-//  // TODO
-//}
-//
-//void TemplatedTableScan::process_reference_column(const ReferenceColumn& reference_column) {
-//  // TODO
-//}
+                                                    table_scan(table_scan) {}
 
   protected:
-  std::shared_ptr<const Table> _on_execute() override {
-
-    // TODO: extract to method, but if I do so I always get an error...
-    auto result_table = std::make_shared<Table>(table_to_scan->chunk_size());
-    for (ColumnID col_id = ColumnID{0}; col_id < table_to_scan->col_count(); ++col_id) {
-      const std::string col_type = table_to_scan->column_type(col_id);
-      const std::string col_name = table_to_scan->column_name(col_id);
-      result_table->add_column_definition(col_name, col_type);
-    }
+  std::shared_ptr<PosList> _on_execute() override {
 
     for (ChunkID chunk_id = ChunkID{0}; chunk_id < table_to_scan->chunk_count(); ++chunk_id) {
       const Chunk &chunk = table_to_scan->get_chunk(chunk_id);
       const std::shared_ptr<BaseColumn> column = chunk.get_column(col_id);
 
-//    column->process_column_in_table_scan(table_scan);
       process_column(chunk_id, column);
     }
 
-    // can we just add to the first chunk?
-    Chunk& chunk = result_table->get_chunk(ChunkID{0});
-    for (ColumnID column_id{0}; column_id < result_table->col_count(); ++column_id) {
-      auto reference_column = std::make_shared<ReferenceColumn>(table_to_scan, column_id, result);
-      chunk.add_column(reference_column);
-    }
-
-    return result_table;
+    auto to_return = std::make_shared<PosList>(result);
+    return to_return;
   }
 
   bool matches_scan_type(const T &left, const T &right) {
@@ -124,7 +91,7 @@ class TemplatedTableScan : TemplatedTableScanBase {
     const ValueID& pos_of_value_to_find = dictionary_column->lower_bound(value_to_find);
     for (ChunkOffset offset = 0; offset < dictionary_column->size(); ++offset) {
       const ValueID& value_id = dictionary_column->attribute_vector()->get(offset);
-      if (matches_scan_type(value_id, pos_of_value_to_find)) {
+      if (matches_scan_type(dictionary_column->value_by_value_id(value_id), dictionary_column->value_by_value_id(pos_of_value_to_find))) {
         result.emplace_back(RowID{chunk_id, offset});
       }
     }
@@ -137,7 +104,7 @@ class TemplatedTableScan : TemplatedTableScanBase {
     for (auto iterator = pos_list->cbegin(); iterator != pos_list->cend(); ++iterator) {
       const RowID row_id = *iterator;
       const Chunk& chunk = table->get_chunk(row_id.chunk_id);
-      auto reference_chunk_column = chunk.get_column(reference_column->referenced_column_id());
+      auto reference_chunk_column = std::dynamic_pointer_cast<ReferenceColumn>(chunk.get_column(reference_column->referenced_column_id()));
 
       process_referenced_column_by_type(reference_chunk_column, row_id);
     }
@@ -159,7 +126,8 @@ class TemplatedTableScan : TemplatedTableScanBase {
 
   void process_referenced_value_column(const std::shared_ptr<ValueColumn<T>> &value_column, const RowID &row_id) {
     const auto& value = value_column->values()[row_id.chunk_offset];
-    if (matches_scan_type(value, value_to_find)) {
+    const T &value_to_find_t = type_cast<T>(value_to_find);
+    if (matches_scan_type(value, value_to_find_t)) {
       // TODO: add to result table
     }
   }
@@ -167,7 +135,8 @@ class TemplatedTableScan : TemplatedTableScanBase {
   void process_referenced_dictionary_column(const std::shared_ptr<DictionaryColumn<T>> &dictionary_column, const RowID &row_id) {
     const auto& value_id = dictionary_column->attribute_vector()->get(row_id.chunk_offset);
     const auto& value = (*dictionary_column->dictionary()).at(value_id);
-    if (matches_scan_type(value, value_to_find)) {
+    const T &value_to_find_t = type_cast<T>(value_to_find);
+    if (matches_scan_type(value, value_to_find_t)) {
       result.emplace_back(row_id);
     }
   }
@@ -176,7 +145,7 @@ class TemplatedTableScan : TemplatedTableScanBase {
   PosList result;
   const ColumnID col_id;
   const ScanType type_of_scan;
-  const AllTypeVariant value_to_find;
+  const AllTypeVariant value_to_find{};
   const TableScan &table_scan;
 };
 
@@ -207,29 +176,33 @@ const AllTypeVariant &TableScan::search_value() const {
 std::shared_ptr<const Table> TableScan::_on_execute() {
   std::shared_ptr<const Table> table_to_scan = _input_table_left();
 
-//  templated_table_scan = make_shared_by_column_type<TemplatedTableScan>(table_to_scan->column_type(col_id),
-  auto templated_table_scan = make_shared_by_column_type<TemplatedTableScanBase, TemplatedTableScan>(table_to_scan->column_type(col_id),
+  const std::string& col_type = table_to_scan->column_type(col_id);
+  TableScan& this_table_scan = *this;
+  auto templated_table_scan = make_shared_by_column_type<TemplatedTableScanBase, TemplatedTableScan>(col_type,
                                                                                                      table_to_scan,
                                                                                                      col_id,
                                                                                                      type_of_scan,
                                                                                                      value_to_find,
-                                                                                                     *this);
+                                                                                                     this_table_scan);
 
-  return templated_table_scan->_on_execute();
+  const std::shared_ptr<PosList> table_scan_result = templated_table_scan->_on_execute();
+
+  // TODO: extract to method, but if I do so I always get an error...
+  auto result_table = std::make_shared<Table>(table_to_scan->chunk_size());
+  for (ColumnID col_id = ColumnID{0}; col_id < table_to_scan->col_count(); ++col_id) {
+    const std::string col_type = table_to_scan->column_type(col_id);
+    const std::string col_name = table_to_scan->column_name(col_id);
+    result_table->add_column_definition(col_name, col_type);
+  }
+
+  // TODO: can we just add to the first chunk?
+  Chunk& chunk = result_table->get_chunk(ChunkID{0});
+  for (ColumnID column_id{0}; column_id < result_table->col_count(); ++column_id) {
+    auto reference_column = std::make_shared<ReferenceColumn>(table_to_scan, column_id, table_scan_result);
+    chunk.add_column(reference_column);
+  }
+
+  return result_table;
 
 }
-
-//template<typename T>
-//void TableScan::process_value_column(const ValueColumn<T>& value_column) {
-//  templated_table_scan->process_value_column(value_column);
-//}
-//
-//void TableScan::process_dictionary_column(const DictionaryColumn& dictionary_column) {
-//  templated_table_scan->process_dictionary_column(dictionary_column);
-//}
-//
-//void TableScan::process_reference_column(const ReferenceColumn& reference_column) {
-//  templated_table_scan->process_reference_column(reference_column);
-//}
-
 }  // namespace opossum
