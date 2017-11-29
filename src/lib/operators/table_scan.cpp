@@ -104,13 +104,13 @@ class TemplatedTableScan : public TemplatedTableScanBase {
     for (auto iterator = pos_list->cbegin(); iterator != pos_list->cend(); ++iterator) {
       const RowID row_id = *iterator;
       const Chunk& chunk = table->get_chunk(row_id.chunk_id);
-      auto reference_chunk_column = std::dynamic_pointer_cast<ReferenceColumn>(chunk.get_column(reference_column->referenced_column_id()));
+      auto reference_chunk_column = chunk.get_column(reference_column->referenced_column_id());
 
       process_referenced_column_by_type(reference_chunk_column, row_id);
     }
   }
 
-  void process_referenced_column_by_type(const std::shared_ptr<ReferenceColumn> &reference_column, const RowID &row_id) {
+  void process_referenced_column_by_type(const std::shared_ptr<BaseColumn> &reference_column, const RowID &row_id) {
     auto value_column_ptr = std::dynamic_pointer_cast<ValueColumn<T>>(reference_column);
     if (value_column_ptr) {
       return process_referenced_value_column(value_column_ptr, row_id);
