@@ -4,8 +4,13 @@
 
 namespace opossum {
 
+class TemplatedTableScanBase {
+ public:
+  virtual std::shared_ptr<const Table> _on_execute() = 0;
+};
+
 template<typename T>
-class TemplatedTableScan {
+class TemplatedTableScan : TemplatedTableScanBase {
   public:
   TemplatedTableScan(std::shared_ptr<const Table>& table_to_scan, const ColumnID& column_id,
                      const ScanType& scan_type, const AllTypeVariant& search_value,
@@ -37,7 +42,7 @@ class TemplatedTableScan {
 //}
 
   protected:
-  std::shared_ptr<const Table> _on_execute() {
+  std::shared_ptr<const Table> _on_execute() override {
 
     // TODO: extract to method, but if I do so I always get an error...
     auto result_table = std::make_shared<Table>(table_to_scan->chunk_size());
@@ -105,10 +110,11 @@ class TemplatedTableScan {
   }
 
   void process_value_column(const ChunkID &chunk_id, const std::shared_ptr<ValueColumn<T>> &value_column) {
-    const std::vector<T> &values = value_column.values();
-    for (ChunkOffset offset = 0; offset < value_column.size(); ++offset) {
+    const std::vector<T> &values = value_column->values();
+    for (ChunkOffset offset = 0; offset < value_column->size(); ++offset) {
       const T &value = values.at(offset);
-      if (matches_scan_type(value, value_to_find)) {
+      const T &value_to_find_t = type_cast<T>(value_to_find);
+      if (matches_scan_type(value, value_to_find_t)) {
         result.emplace_back(RowID{chunk_id, offset});
       }
     }
@@ -129,9 +135,9 @@ class TemplatedTableScan {
 
     const std::shared_ptr<const PosList> pos_list = reference_column->pos_list();
     for (auto iterator = pos_list->cbegin(); iterator != pos_list->cend(); ++iterator) {
-      RowID &row_id = *iterator;
+      const RowID row_id = *iterator;
       const Chunk& chunk = table->get_chunk(row_id.chunk_id);
-      std::shared_ptr<ReferenceColumn> reference_chunk_column = chunk.get_column(reference_column->referenced_column_id());
+      auto reference_chunk_column = chunk.get_column(reference_column->referenced_column_id());
 
       process_referenced_column_by_type(reference_chunk_column, row_id);
     }
@@ -202,11 +208,14 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
   std::shared_ptr<const Table> table_to_scan = _input_table_left();
 
 //  templated_table_scan = make_shared_by_column_type<TemplatedTableScan>(table_to_scan->column_type(col_id),
-  auto templated_table_scan = make_shared_by_column_type<TemplatedTableScan>(table_to_scan->column_type(col_id),
-                                                                             table_to_scan, col_id, type_of_scan,
-                                                                             value_to_find, *this);
+  auto templated_table_scan = make_shared_by_column_type<TemplatedTableScanBase, TemplatedTableScan>(table_to_scan->column_type(col_id),
+                                                                                                     table_to_scan,
+                                                                                                     col_id,
+                                                                                                     type_of_scan,
+                                                                                                     value_to_find,
+                                                                                                     *this);
 
-  return templated_table_scan();
+  return templated_table_scan->_on_execute();
 
 }
 

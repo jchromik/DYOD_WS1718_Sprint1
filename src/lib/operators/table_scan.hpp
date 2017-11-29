@@ -10,10 +10,10 @@
 #include "all_type_variant.hpp"
 #include "types.hpp"
 #include "utils/assert.hpp"
+#include "type_cast.hpp"
 
 namespace opossum {
 
-class BaseTableScanImpl;
 class Table;
 
 class TableScan : public AbstractOperator {
