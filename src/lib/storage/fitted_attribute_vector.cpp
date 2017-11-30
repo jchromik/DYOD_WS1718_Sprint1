@@ -19,7 +19,7 @@ ValueID FittedAttributeVector<T>::get(const size_t i) const {
 // also fails if value_is unrepresentably big
 template <typename T>
 void FittedAttributeVector<T>::set(const size_t i, const ValueID value_id) {
-  Assert(value_id < std::numeric_limits<T>::max() + 1, "ValueID is too big to be represented");
+  Assert(!(value_id > std::numeric_limits<T>::max()), "ValueID is too big to be represented");
 
   if (i < _entries.size()) {
     _entries.insert(_entries.cbegin() + i, static_cast<T>(value_id));
