@@ -24,7 +24,7 @@ bool matches_scan_type(const T &left, const T &right, ScanType type_of_scan) {
   }
 }
 
-class TemplatedTableScanBase {
+class TableScan::TemplatedTableScanBase {
  public:
   explicit TemplatedTableScanBase() = default;
 
@@ -32,11 +32,11 @@ class TemplatedTableScanBase {
 };
 
 template<typename T>
-class TemplatedTableScan : public TemplatedTableScanBase {
+class TableScan::TemplatedTableScan : public TableScan::TemplatedTableScanBase {
   public:
   explicit TemplatedTableScan(std::shared_ptr<const Table>& table_to_scan, const ColumnID& column_id,
                      const ScanType& scan_type, const AllTypeVariant& search_value,
-                     const TableScan& table_scan) : TemplatedTableScanBase{},
+                              TableScan& table_scan) : TableScan::TemplatedTableScanBase{},
                                                     table_to_scan(table_to_scan),
                                                     col_id(column_id),
                                                     type_of_scan(scan_type),
@@ -137,12 +137,15 @@ class TemplatedTableScan : public TemplatedTableScanBase {
   }
 
   void process_reference_column(const ChunkID &chunk_id, const std::shared_ptr<ReferenceColumn> &reference_column) {
-    auto table = reference_column->referenced_table();
+    if (!table_scan.referenced_table.has_value()) {
+      table_scan.referenced_table = reference_column->referenced_table();
+    } else if (table_scan.referenced_table.value() != reference_column->referenced_table()){
+      throw std::runtime_error("The same column in different chunks references to different tables.");
+    }
 
     const std::shared_ptr<const PosList> pos_list = reference_column->pos_list();
-    for (auto iterator = pos_list->cbegin(); iterator != pos_list->cend(); ++iterator) {
-      const RowID row_id = *iterator;
-      const Chunk& chunk = table->get_chunk(row_id.chunk_id);
+    for (auto &row_id : *pos_list) {
+      const Chunk& chunk = table_scan.referenced_table.value()->get_chunk(row_id.chunk_id);
       auto reference_chunk_column = chunk.get_column(reference_column->referenced_column_id());
 
       process_referenced_column_by_type(reference_chunk_column, row_id);
@@ -183,7 +186,7 @@ class TemplatedTableScan : public TemplatedTableScanBase {
   const ColumnID col_id;
   const ScanType type_of_scan;
   const T value_to_find;
-  const TableScan &table_scan;
+  TableScan &table_scan;
 };
 
 TableScan::TableScan(const std::shared_ptr<const AbstractOperator> in, ColumnID column_id,
@@ -214,7 +217,7 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
   std::shared_ptr<const Table> table_to_scan = _input_table_left();
 
   const std::string& col_type = table_to_scan->column_type(_col_id);
-  auto templated_table_scan = make_shared_by_column_type<TemplatedTableScanBase, TemplatedTableScan>(col_type,
+  auto templated_table_scan = make_shared_by_column_type<TableScan::TemplatedTableScanBase, TableScan::TemplatedTableScan>(col_type,
                                                                                                      table_to_scan,
                                                                                                      _col_id,
                                                                                                      _type_of_scan,
@@ -222,20 +225,28 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
                                                                                                      *this);
   const std::shared_ptr<PosList> table_scan_result = templated_table_scan->_on_execute();
 
+  std::shared_ptr<const Table> table_for_result;
+  if (referenced_table.has_value()) {
+    // use referenced table instead to ensure RowIDs, ... are working properly
+    table_for_result = referenced_table.value();
+  } else {
+    table_for_result = table_to_scan;
+  }
+
   // TODO: extract to method, but if I do so I always get an error...
-  auto result_table = std::make_shared<Table>(table_to_scan->chunk_size());
-  for (ColumnID col_id{0}; col_id < table_to_scan->col_count(); ++col_id) {
-    const std::string col_type = table_to_scan->column_type(col_id);
-    const std::string col_name = table_to_scan->column_name(col_id);
+  auto result_table = std::make_shared<Table>(table_for_result->chunk_size());
+  for (ColumnID col_id{0}; col_id < table_for_result->col_count(); ++col_id) {
+    const std::string col_type = table_for_result->column_type(col_id);
+    const std::string col_name = table_for_result->column_name(col_id);
     result_table->add_column_definition(col_name, col_type);
   }
 
-  // TODO: can we just add to the first chunk?
-  Chunk& chunk = result_table->get_chunk(ChunkID{0});
+  Chunk chunk;
   for (ColumnID col_id{0}; col_id < result_table->col_count(); ++col_id) {
-    auto reference_column = std::make_shared<ReferenceColumn>(table_to_scan, col_id, table_scan_result);
+    auto reference_column = std::make_shared<ReferenceColumn>(table_for_result, col_id, table_scan_result);
     chunk.add_column(reference_column);
   }
+  result_table->emplace_chunk(std::move(chunk));
 
   return result_table;
 
