@@ -3,14 +3,15 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
-#include <storage/reference_column.hpp>
 
 #include "abstract_operator.hpp"
 #include "all_type_variant.hpp"
+#include "storage/reference_column.hpp"
+#include "type_cast.hpp"
 #include "types.hpp"
 #include "utils/assert.hpp"
-#include "type_cast.hpp"
 
 namespace opossum {
 
@@ -29,7 +30,7 @@ class TableScan : public AbstractOperator {
   const AllTypeVariant& search_value() const;
 
  protected:
-  template<typename T>
+  template <typename T>
   class TemplatedTableScan;
   std::shared_ptr<const Table> _on_execute() override;
 

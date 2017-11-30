@@ -3,21 +3,22 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <utility>
 
 #include "../base_test.hpp"
 
+#include "all_type_variant.hpp"
 #include "operators/print.hpp"
 #include "operators/table_scan.hpp"
 #include "operators/table_wrapper.hpp"
 #include "storage/reference_column.hpp"
 #include "storage/table.hpp"
 #include "utils/load_table.hpp"
-#include "all_type_variant.hpp"
 
 namespace opossum {
 
 class OperatorsTableScanTest : public BaseTest {
-  protected:
+ protected:
   void SetUp() override {
     _table_wrapper = std::make_shared<TableWrapper>(load_table("src/test/tables/int_float.tbl", 2));
     _table_wrapper->execute();
@@ -69,13 +70,13 @@ class OperatorsTableScanTest : public BaseTest {
     return table_wrapper;
   }
 
-  void ASSERT_COLUMN_EQ(std::shared_ptr<const Table> table, const ColumnID &column_id,
+  void ASSERT_COLUMN_EQ(std::shared_ptr<const Table> table, const ColumnID& column_id,
                         std::vector<AllTypeVariant> expected) {
     for (auto chunk_id = ChunkID{0u}; chunk_id < table->chunk_count(); ++chunk_id) {
-      const auto &chunk = table->get_chunk(chunk_id);
+      const auto& chunk = table->get_chunk(chunk_id);
 
       for (auto chunk_offset = ChunkOffset{0u}; chunk_offset < chunk.size(); ++chunk_offset) {
-        const auto &column = *chunk.get_column(column_id);
+        const auto& column = *chunk.get_column(column_id);
 
         const auto found_value = column[chunk_offset];
         const auto comparator = [found_value](const AllTypeVariant expected_value) {
@@ -126,44 +127,46 @@ TEST_F(OperatorsTableScanTest, SingleScanReturnsCorrectRowCount) {
   EXPECT_TABLE_EQ(scan->get_output(), expected_result);
 }
 
- TEST_F(OperatorsTableScanTest, ScanOnDictColumn) {
-   // we do not need to check for a non existing value,//  // because that happens automatically when we scan the second chunk
+TEST_F(OperatorsTableScanTest, ScanOnDictColumn) {
+  // we do not need to check for a non existing value,
+  // because that happens automatically when we scan the second chunk
 
-   std::map<ScanType, std::vector<AllTypeVariant>> tests;
-   tests[ScanType::OpEquals] = {104};
-   tests[ScanType::OpNotEquals] = {100, 102, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
-   tests[ScanType::OpLessThan] = {100, 102};
-   tests[ScanType::OpLessThanEquals] = {100, 102, 104};
-   tests[ScanType::OpGreaterThan] = {106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
-   tests[ScanType::OpGreaterThanEquals] = {104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
-      for (const auto& test : tests) {
-     auto scan = std::make_shared<TableScan>(_table_wrapper_even_dict, ColumnID{0}, test.first, 4);
-     scan->execute();
+  std::map<ScanType, std::vector<AllTypeVariant>> tests;
+  tests[ScanType::OpEquals] = {104};
+  tests[ScanType::OpNotEquals] = {100, 102, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
+  tests[ScanType::OpLessThan] = {100, 102};
+  tests[ScanType::OpLessThanEquals] = {100, 102, 104};
+  tests[ScanType::OpGreaterThan] = {106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
+  tests[ScanType::OpGreaterThanEquals] = {104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
+  for (const auto& test : tests) {
+    auto scan = std::make_shared<TableScan>(_table_wrapper_even_dict, ColumnID{0}, test.first, 4);
+    scan->execute();
 
-     ASSERT_COLUMN_EQ(scan->get_output(), ColumnID{1}, test.second);
-   }
- }
+    ASSERT_COLUMN_EQ(scan->get_output(), ColumnID{1}, test.second);
+  }
+}
 
- TEST_F(OperatorsTableScanTest, ScanOnReferencedDictColumn) {
-   // we do not need to check for a non existing value,//  // because that happens automatically when we scan the second chunk
+TEST_F(OperatorsTableScanTest, ScanOnReferencedDictColumn) {
+  // we do not need to check for a non existing value,
+  // because that happens automatically when we scan the second chunk
 
-   std::map<ScanType, std::vector<AllTypeVariant>> tests;
-   tests[ScanType::OpEquals] = {104};
-   tests[ScanType::OpNotEquals] = {100, 102, 106};
-   tests[ScanType::OpLessThan] = {100, 102};
-   tests[ScanType::OpLessThanEquals] = {100, 102, 104};
-   tests[ScanType::OpGreaterThan] = {106};
-   tests[ScanType::OpGreaterThanEquals] = {104, 106};
-      for (const auto& test : tests) {
-     auto scan1 = std::make_shared<TableScan>(_table_wrapper_even_dict, ColumnID{1}, ScanType::OpLessThan, 108);
-     scan1->execute();
+  std::map<ScanType, std::vector<AllTypeVariant>> tests;
+  tests[ScanType::OpEquals] = {104};
+  tests[ScanType::OpNotEquals] = {100, 102, 106};
+  tests[ScanType::OpLessThan] = {100, 102};
+  tests[ScanType::OpLessThanEquals] = {100, 102, 104};
+  tests[ScanType::OpGreaterThan] = {106};
+  tests[ScanType::OpGreaterThanEquals] = {104, 106};
+  for (const auto& test : tests) {
+    auto scan1 = std::make_shared<TableScan>(_table_wrapper_even_dict, ColumnID{1}, ScanType::OpLessThan, 108);
+    scan1->execute();
 
-     auto scan2 = std::make_shared<TableScan>(scan1, ColumnID{0}, test.first, 4);
-     scan2->execute();
+    auto scan2 = std::make_shared<TableScan>(scan1, ColumnID{0}, test.first, 4);
+    scan2->execute();
 
-     ASSERT_COLUMN_EQ(scan2->get_output(), ColumnID{1}, test.second);
-   }
- }
+    ASSERT_COLUMN_EQ(scan2->get_output(), ColumnID{1}, test.second);
+  }
+}
 
 TEST_F(OperatorsTableScanTest, ScanPartiallyCompressed) {
   std::shared_ptr<Table> expected_result = load_table("src/test/tables/int_float_seq_filtered.tbl", 2);
@@ -175,64 +178,64 @@ TEST_F(OperatorsTableScanTest, ScanPartiallyCompressed) {
   EXPECT_TABLE_EQ(scan_1->get_output(), expected_result);
 }
 
- TEST_F(OperatorsTableScanTest, ScanOnDictColumnValueGreaterThanMaxDictionaryValue) {
-   const auto all_rows = std::vector<AllTypeVariant>{100, 102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
-   const auto no_rows = std::vector<AllTypeVariant>{};
+TEST_F(OperatorsTableScanTest, ScanOnDictColumnValueGreaterThanMaxDictionaryValue) {
+  const auto all_rows = std::vector<AllTypeVariant>{100, 102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
+  const auto no_rows = std::vector<AllTypeVariant>{};
 
-   std::map<ScanType, std::vector<AllTypeVariant>> tests;
-   tests[ScanType::OpEquals] = no_rows;
-   tests[ScanType::OpNotEquals] = all_rows;
-   tests[ScanType::OpLessThan] = all_rows;
-   tests[ScanType::OpLessThanEquals] = all_rows;
-   tests[ScanType::OpGreaterThan] = no_rows;
-   tests[ScanType::OpGreaterThanEquals] = no_rows;
+  std::map<ScanType, std::vector<AllTypeVariant>> tests;
+  tests[ScanType::OpEquals] = no_rows;
+  tests[ScanType::OpNotEquals] = all_rows;
+  tests[ScanType::OpLessThan] = all_rows;
+  tests[ScanType::OpLessThanEquals] = all_rows;
+  tests[ScanType::OpGreaterThan] = no_rows;
+  tests[ScanType::OpGreaterThanEquals] = no_rows;
 
-   for (const auto& test : tests) {
-     auto scan = std::make_shared<TableScan>(_table_wrapper_even_dict, ColumnID{0}, test.first, 30);
-     scan->execute();
+  for (const auto& test : tests) {
+    auto scan = std::make_shared<TableScan>(_table_wrapper_even_dict, ColumnID{0}, test.first, 30);
+    scan->execute();
 
-     ASSERT_COLUMN_EQ(scan->get_output(), ColumnID{1}, test.second);
-   }
- }
+    ASSERT_COLUMN_EQ(scan->get_output(), ColumnID{1}, test.second);
+  }
+}
 
- TEST_F(OperatorsTableScanTest, ScanOnDictColumnValueLessThanMinDictionaryValue) {
-   const auto all_rows = std::vector<AllTypeVariant>{100, 102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
-   const auto no_rows = std::vector<AllTypeVariant>{};
+TEST_F(OperatorsTableScanTest, ScanOnDictColumnValueLessThanMinDictionaryValue) {
+  const auto all_rows = std::vector<AllTypeVariant>{100, 102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
+  const auto no_rows = std::vector<AllTypeVariant>{};
 
-   std::map<ScanType, std::vector<AllTypeVariant>> tests;
-   tests[ScanType::OpEquals] = no_rows;
-   tests[ScanType::OpNotEquals] = all_rows;
-   tests[ScanType::OpLessThan] = no_rows;
-   tests[ScanType::OpLessThanEquals] = no_rows;
-   tests[ScanType::OpGreaterThan] = all_rows;
-   tests[ScanType::OpGreaterThanEquals] = all_rows;
+  std::map<ScanType, std::vector<AllTypeVariant>> tests;
+  tests[ScanType::OpEquals] = no_rows;
+  tests[ScanType::OpNotEquals] = all_rows;
+  tests[ScanType::OpLessThan] = no_rows;
+  tests[ScanType::OpLessThanEquals] = no_rows;
+  tests[ScanType::OpGreaterThan] = all_rows;
+  tests[ScanType::OpGreaterThanEquals] = all_rows;
 
-   for (const auto& test : tests) {
-     auto scan = std::make_shared<TableScan>(_table_wrapper_even_dict, ColumnID{0} /* "a" */, test.first, -10);
-     scan->execute();
+  for (const auto& test : tests) {
+    auto scan = std::make_shared<TableScan>(_table_wrapper_even_dict, ColumnID{0} /* "a" */, test.first, -10);
+    scan->execute();
 
-     ASSERT_COLUMN_EQ(scan->get_output(), ColumnID{1}, test.second);
-   }
- }
+    ASSERT_COLUMN_EQ(scan->get_output(), ColumnID{1}, test.second);
+  }
+}
 
- TEST_F(OperatorsTableScanTest, ScanOnDictColumnAroundBounds) {
-   // scanning for a value that is around the dictionary's bounds
+TEST_F(OperatorsTableScanTest, ScanOnDictColumnAroundBounds) {
+  // scanning for a value that is around the dictionary's bounds
 
-   std::map<ScanType, std::vector<AllTypeVariant>> tests;
-   tests[ScanType::OpEquals] = {100};
-   tests[ScanType::OpLessThan] = {};
-   tests[ScanType::OpLessThanEquals] = {100};
-   tests[ScanType::OpGreaterThan] = {102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
-   tests[ScanType::OpGreaterThanEquals] = {100, 102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
-   tests[ScanType::OpNotEquals] = {102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
+  std::map<ScanType, std::vector<AllTypeVariant>> tests;
+  tests[ScanType::OpEquals] = {100};
+  tests[ScanType::OpLessThan] = {};
+  tests[ScanType::OpLessThanEquals] = {100};
+  tests[ScanType::OpGreaterThan] = {102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
+  tests[ScanType::OpGreaterThanEquals] = {100, 102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
+  tests[ScanType::OpNotEquals] = {102, 104, 106, 108, 110, 112, 114, 116, 118, 120, 122, 124};
 
-   for (const auto& test : tests) {
-     auto scan = std::make_shared<opossum::TableScan>(_table_wrapper_even_dict, ColumnID{0}, test.first, 0);
-     scan->execute();
+  for (const auto& test : tests) {
+    auto scan = std::make_shared<opossum::TableScan>(_table_wrapper_even_dict, ColumnID{0}, test.first, 0);
+    scan->execute();
 
-     ASSERT_COLUMN_EQ(scan->get_output(), ColumnID{1}, test.second);
-   }
- }
+    ASSERT_COLUMN_EQ(scan->get_output(), ColumnID{1}, test.second);
+  }
+}
 
 TEST_F(OperatorsTableScanTest, ScanWithEmptyInput) {
   auto scan_1 = std::make_shared<opossum::TableScan>(_table_wrapper, ColumnID{0}, ScanType::OpGreaterThan, 12345);
@@ -257,7 +260,7 @@ TEST_F(OperatorsTableScanTest, ScanOnWideDictionaryColumn) {
   // 2**16 + 1 values require a data type of 32bit.
   const auto table_wrapper_dict_32 = get_table_op_with_n_dict_entries((1 << 16) + 1);
   auto scan_2 =
-          std::make_shared<opossum::TableScan>(table_wrapper_dict_32, ColumnID{0}, ScanType::OpGreaterThan, 65500);
+      std::make_shared<opossum::TableScan>(table_wrapper_dict_32, ColumnID{0}, ScanType::OpGreaterThan, 65500);
   scan_2->execute();
 
   EXPECT_EQ(scan_2->get_output()->row_count(), static_cast<size_t>(37));

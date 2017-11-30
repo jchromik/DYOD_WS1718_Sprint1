@@ -19,16 +19,16 @@
 
 namespace opossum {
 
- class ReferenceColumnTest : public ::testing::Test {
-   virtual void SetUp() {
-     _test_table = std::make_shared<opossum::Table>(opossum::Table(3));
-     _test_table->add_column("a", "int");
-     _test_table->add_column("b", "float");
-     _test_table->append({123, 456.7f});
-     _test_table->append({1234, 457.7f});
-     _test_table->append({12345, 458.7f});
-     _test_table->append({54321, 458.7f});
-     _test_table->append({12345, 458.7f});
+class ReferenceColumnTest : public ::testing::Test {
+  virtual void SetUp() {
+    _test_table = std::make_shared<opossum::Table>(opossum::Table(3));
+    _test_table->add_column("a", "int");
+    _test_table->add_column("b", "float");
+    _test_table->append({123, 456.7f});
+    _test_table->append({1234, 457.7f});
+    _test_table->append({12345, 458.7f});
+    _test_table->append({54321, 458.7f});
+    _test_table->append({12345, 458.7f});
 
     _test_table_dict = std::make_shared<opossum::Table>(5);
     _test_table_dict->add_column("a", "int");
