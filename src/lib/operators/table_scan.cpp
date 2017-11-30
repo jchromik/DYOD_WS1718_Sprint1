@@ -40,7 +40,7 @@ class TemplatedTableScan : public TemplatedTableScanBase {
                                                     table_to_scan(table_to_scan),
                                                     col_id(column_id),
                                                     type_of_scan(scan_type),
-                                                    value_to_find(search_value),
+                                                    value_to_find(type_cast<T>(search_value)),
                                                     table_scan(table_scan) {
     result = std::make_shared<PosList>();
   }
@@ -81,8 +81,7 @@ class TemplatedTableScan : public TemplatedTableScanBase {
     const std::vector<T> &values = value_column->values();
     for (ChunkOffset offset = 0; offset < value_column->size(); ++offset) {
       const T &value = values.at(offset);
-      const T &value_to_find_t = type_cast<T>(value_to_find);
-      if (matches_scan_type(value, value_to_find_t, type_of_scan)) {
+      if (matches_scan_type(value, value_to_find, type_of_scan)) {
         result->push_back(RowID{chunk_id, offset});
       }
     }
@@ -90,6 +89,45 @@ class TemplatedTableScan : public TemplatedTableScanBase {
 
   void process_dictionary_column(const ChunkID &chunk_id, std::shared_ptr<DictionaryColumn<T>> dictionary_column) {
     const ValueID& pos_of_value_to_find = dictionary_column->lower_bound(value_to_find);
+    if (pos_of_value_to_find == INVALID_VALUE_ID) {
+      switch (type_of_scan) {
+        case ScanType::OpEquals:
+        case ScanType::OpGreaterThan:
+        case ScanType::OpGreaterThanEquals:
+          return;
+        case ScanType::OpNotEquals:
+        case ScanType::OpLessThan:
+        case ScanType::OpLessThanEquals:
+          return add_all(chunk_id, dictionary_column);
+        default:
+          throw std::runtime_error("The ScanType is not implemented");
+      }
+    } else if (dictionary_column->value_by_value_id(pos_of_value_to_find) != value_to_find) {
+        switch (type_of_scan) {
+          case ScanType::OpEquals:
+          case ScanType::OpLessThanEquals:
+            return;
+          case ScanType::OpGreaterThan:
+          case ScanType::OpNotEquals:
+            return add_all(chunk_id, dictionary_column);
+          case ScanType::OpGreaterThanEquals:
+          case ScanType::OpLessThan:
+            return add_matching(chunk_id, dictionary_column, pos_of_value_to_find);
+          default:
+            throw std::runtime_error("The ScanType is not implemented");
+        }
+    } else {
+      return add_matching(chunk_id, dictionary_column, pos_of_value_to_find);
+    }
+  }
+
+  void add_all(const ChunkID &chunk_id, std::shared_ptr<DictionaryColumn<T>> dictionary_column) {
+    for (ChunkOffset offset = 0; offset < dictionary_column->size(); ++offset) {
+      result->push_back(RowID{chunk_id, offset});
+    }
+  }
+
+  void add_matching(const ChunkID &chunk_id, std::shared_ptr<DictionaryColumn<T>> dictionary_column, const ValueID& pos_of_value_to_find) {
     for (ChunkOffset offset = 0; offset < dictionary_column->size(); ++offset) {
       const ValueID& value_id = dictionary_column->attribute_vector()->get(offset);
       if (matches_scan_type(value_id, pos_of_value_to_find, type_of_scan)) {
@@ -127,18 +165,16 @@ class TemplatedTableScan : public TemplatedTableScanBase {
 
   void process_referenced_value_column(const std::shared_ptr<ValueColumn<T>> &value_column, const RowID &row_id) {
     const auto& value = value_column->values()[row_id.chunk_offset];
-    const T &value_to_find_t = type_cast<T>(value_to_find);
-    if (matches_scan_type(value, value_to_find_t, type_of_scan)) {
-      // TODO: add to result table
+    if (matches_scan_type(value, value_to_find, type_of_scan)) {
+      result->push_back(row_id);
     }
   }
 
   void process_referenced_dictionary_column(const std::shared_ptr<DictionaryColumn<T>> &dictionary_column, const RowID &row_id) {
     const auto& value_id = dictionary_column->attribute_vector()->get(row_id.chunk_offset);
     const auto& value = (*dictionary_column->dictionary()).at(value_id);
-    const T &value_to_find_t = type_cast<T>(value_to_find);
-    if (matches_scan_type(value, value_to_find_t, type_of_scan)) {
-      result->emplace_back(row_id);
+    if (matches_scan_type(value, value_to_find, type_of_scan)) {
+      result->push_back(row_id);
     }
   }
 
@@ -146,7 +182,7 @@ class TemplatedTableScan : public TemplatedTableScanBase {
   std::shared_ptr<PosList> result;
   const ColumnID col_id;
   const ScanType type_of_scan;
-  const AllTypeVariant value_to_find{};
+  const T value_to_find;
   const TableScan &table_scan;
 };
 
@@ -178,14 +214,12 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
   std::shared_ptr<const Table> table_to_scan = _input_table_left();
 
   const std::string& col_type = table_to_scan->column_type(_col_id);
-  TableScan& this_table_scan = *this;
   auto templated_table_scan = make_shared_by_column_type<TemplatedTableScanBase, TemplatedTableScan>(col_type,
                                                                                                      table_to_scan,
                                                                                                      _col_id,
                                                                                                      _type_of_scan,
                                                                                                      _value_to_find,
-                                                                                                     this_table_scan);
-
+                                                                                                     *this);
   const std::shared_ptr<PosList> table_scan_result = templated_table_scan->_on_execute();
 
   // TODO: extract to method, but if I do so I always get an error...
