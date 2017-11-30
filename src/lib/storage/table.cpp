@@ -96,8 +96,11 @@ Chunk& Table::get_chunk(ChunkID chunk_id) { return _chunks.at(chunk_id); }
 
 const Chunk& Table::get_chunk(ChunkID chunk_id) const { return _chunks.at(chunk_id); }
 
-void emplace_chunk(Chunk chunk) {
-  // Implementation goes here
+void Table::emplace_chunk(Chunk chunk) {
+  if (_chunks.size() == 1 && _chunks.front().size() == 0) {
+    _chunks.erase(_chunks.begin());
+  }
+  _chunks.push_back(std::move(chunk));
 }
 
 void Table::compress_chunk(ChunkID chunk_id) {

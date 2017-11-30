@@ -27,8 +27,6 @@ class ValueColumn : public BaseColumn {
   // e.g. auto& values = col.values(); and then: values.at(i); in your loop.
   const std::vector<T>& values() const;
 
-//  void process_column_in_table_scan(const TableScan& table_scan) override;
-
  protected:
   std::vector<T> _entries;
 };
