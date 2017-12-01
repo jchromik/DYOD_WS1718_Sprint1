@@ -27,6 +27,7 @@ class ReferenceColumnTest : public ::testing::Test {
     _test_table->append({123, 456.7f});
     _test_table->append({1234, 457.7f});
     _test_table->append({12345, 458.7f});
+    _test_table->append({54321, 458.7f});
     _test_table->append({12345, 458.7f});
 
     _test_table_dict = std::make_shared<opossum::Table>(5);
@@ -90,24 +91,26 @@ TEST_F(ReferenceColumnTest, RetrievesValuesFromChunks) {
   auto& column_2 = *(_test_table->get_chunk(ChunkID{1}).get_column(ColumnID{0}));
 
   EXPECT_EQ(column_1.size(), 3u);
-  EXPECT_EQ(column_2.size(), 1u);
+  EXPECT_EQ(column_2.size(), 2u);
   EXPECT_EQ(ref_column.size(), 3u);
   EXPECT_EQ(ref_column[0], column_1[2]);
   EXPECT_EQ(ref_column[2], column_2[0]);
 }
 
 TEST_F(ReferenceColumnTest, IndexOutOfBounds) {
-  // PosList with (0, 0), (2, 1), (1, 1)
-  auto pos_list = std::make_shared<PosList>(
-      std::initializer_list<RowID>({RowID{ChunkID{0}, 0}, RowID{ChunkID{2}, 1}, RowID{ChunkID{1}, 1}}));
+  // PosList with (0, 0), (2, 1), (1, 1), (1, 3)
+  auto pos_list = std::make_shared<PosList>(std::initializer_list<RowID>(
+      {RowID{ChunkID{0}, 0}, RowID{ChunkID{2}, 1}, RowID{ChunkID{1}, 1}, RowID{ChunkID{1}, 3}}));
   auto ref_column = ReferenceColumn(_test_table, ColumnID{0}, pos_list);
 
-  auto& column = *(_test_table->get_chunk(ChunkID{0}).get_column(ColumnID{0}));
+  auto& column_chunk0 = *(_test_table->get_chunk(ChunkID{0}).get_column(ColumnID{0}));
+  auto& column_chunk1 = *(_test_table->get_chunk(ChunkID{1}).get_column(ColumnID{0}));
 
-  EXPECT_EQ(ref_column[0], column[0]);
+  EXPECT_EQ(ref_column[0], column_chunk0[0]);
   EXPECT_THROW(ref_column[1], std::exception);
-  EXPECT_THROW(ref_column[2], std::exception);
+  EXPECT_EQ(ref_column[2], column_chunk1[1]);
   EXPECT_THROW(ref_column[3], std::exception);
+  // EXPECT_THROW(ref_column[4], std::exception);
 }
 
 TEST_F(ReferenceColumnTest, ColumnIndexOutOfBounds) {

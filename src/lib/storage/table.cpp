@@ -96,11 +96,18 @@ Chunk& Table::get_chunk(ChunkID chunk_id) { return _chunks.at(chunk_id); }
 
 const Chunk& Table::get_chunk(ChunkID chunk_id) const { return _chunks.at(chunk_id); }
 
+void Table::emplace_chunk(Chunk chunk) {
+  if (_chunks.size() == 1 && _chunks.front().size() == 0) {
+    _chunks.erase(_chunks.begin());
+  }
+  _chunks.push_back(std::move(chunk));
+}
+
 void Table::compress_chunk(ChunkID chunk_id) {
   Chunk compressed_chunk = Chunk();
   Chunk& chunk = _chunks.at(chunk_id);
 
-  for (auto col_index = 0; col_index < chunk.col_count(); ++col_index) {
+  for (auto col_index = ColumnID{0}; col_index < chunk.col_count(); ++col_index) {
     compressed_chunk.add_column(make_shared_by_column_type<BaseColumn, DictionaryColumn>(
         _col_types.at(col_index), chunk.get_column(ColumnID(col_index))));
   }
