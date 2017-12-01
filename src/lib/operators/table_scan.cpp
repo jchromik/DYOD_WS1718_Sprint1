@@ -1,6 +1,11 @@
-#include "table_scan.hpp"
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "resolve_type.hpp"
 #include "storage/table.hpp"
+#include "table_scan.hpp"
 
 namespace opossum {
 
@@ -219,7 +224,7 @@ std::shared_ptr<const Table> TableScan::_on_execute() {
     table_for_result = table_to_scan;
   }
 
-  // TODO: extract to method, but if I do so I always get an error...
+  // TODO(anyone): extract to method, but if I do so I always get an error...
   auto result_table = std::make_shared<Table>(table_for_result->chunk_size());
   for (ColumnID col_id{0}; col_id < table_for_result->col_count(); ++col_id) {
     const std::string col_type = table_for_result->column_type(col_id);

@@ -99,12 +99,8 @@ TEST_F(ReferenceColumnTest, RetrievesValuesFromChunks) {
 
 TEST_F(ReferenceColumnTest, IndexOutOfBounds) {
   // PosList with (0, 0), (2, 1), (1, 1), (1, 3)
-  auto pos_list = std::make_shared<PosList>(
-      std::initializer_list<RowID>({
-        RowID{ChunkID{0}, 0},
-        RowID{ChunkID{2}, 1},
-        RowID{ChunkID{1}, 1},
-        RowID{ChunkID{1}, 3}}));
+  auto pos_list = std::make_shared<PosList>(std::initializer_list<RowID>(
+      {RowID{ChunkID{0}, 0}, RowID{ChunkID{2}, 1}, RowID{ChunkID{1}, 1}, RowID{ChunkID{1}, 3}}));
   auto ref_column = ReferenceColumn(_test_table, ColumnID{0}, pos_list);
 
   auto& column_chunk0 = *(_test_table->get_chunk(ChunkID{0}).get_column(ColumnID{0}));
