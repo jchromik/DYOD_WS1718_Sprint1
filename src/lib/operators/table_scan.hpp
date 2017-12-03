@@ -40,7 +40,9 @@ class TableScan : public AbstractOperator {
   AllTypeVariant _value_to_find;
   // if the column to scan is a reference column, the following member holds the referenced table to use for result
   // (the RowIDs reference chunks in original table, not in reference table)
-  std::optional<std::shared_ptr<const Table>> referenced_table = std::nullopt;
+  std::optional<std::shared_ptr<const Table>> _referenced_table = std::nullopt;
+
+  std::shared_ptr<Table> _create_table_with_schema_of(std::shared_ptr<const Table> table) const;
 };
 
 }  // namespace opossum

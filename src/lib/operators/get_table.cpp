@@ -5,18 +5,16 @@
 
 namespace opossum {
 
-GetTable::GetTable(const std::string& name) {
-  this->name_of_table = name;
-  has_table = storage_manager.has_table(name);
-  if (has_table) this->table_to_retrieve = storage_manager.get_table(name);
-}
+GetTable::GetTable(const std::string& name) { _name_of_table = name; }
 
 std::shared_ptr<const Table> GetTable::_on_execute() {
-  if (has_table)
-    return table_to_retrieve;
-  else
+  StorageManager& storage_manager = StorageManager::get();
+  if (storage_manager.has_table(_name_of_table)) {
+    return storage_manager.get_table(_name_of_table);
+  } else {
     throw std::runtime_error("Table does not exist");
+  }
 }
 
-const std::string& GetTable::table_name() const { return name_of_table; }
+const std::string& GetTable::table_name() const { return _name_of_table; }
 }  // namespace opossum

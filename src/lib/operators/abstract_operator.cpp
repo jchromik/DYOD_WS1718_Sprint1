@@ -18,6 +18,9 @@ void AbstractOperator::execute() { _output = _on_execute(); }
 
 std::shared_ptr<const Table> AbstractOperator::get_output() const {
   // TODO(anyone): You should place some meaningful checks here
+  if (_output == nullptr) {
+    throw std::runtime_error("Output is nullptr. Call execute first.");
+  }
 
   return _output;
 }
