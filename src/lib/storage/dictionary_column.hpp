@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "../utils/assert.hpp"
 #include "all_type_variant.hpp"
 #include "base_attribute_vector.hpp"
 #include "fitted_attribute_vector.hpp"
@@ -32,8 +33,6 @@ class DictionaryColumn : public BaseColumn {
    * Creates a Dictionary column from a given value column.
    */
   explicit DictionaryColumn(const std::shared_ptr<BaseColumn>& base_column) {
-    // Using dynamic_pointer_cast to go down/across class hierarchy.
-    // (cf: http://en.cppreference.com/w/cpp/memory/shared_ptr/pointer_cast)
     // Doing this since dictionary compression only works for ValueColumns (for now).
     const std::shared_ptr<ValueColumn<T>>& value_column_ptr = std::dynamic_pointer_cast<ValueColumn<T>>(base_column);
     const ValueColumn<T>& value_column = *value_column_ptr;
@@ -105,15 +104,12 @@ class DictionaryColumn : public BaseColumn {
   std::shared_ptr<BaseAttributeVector> _attribute_vector;
 
   // Build up dictionary
-  // In this implementation we do not rely on the property of std::sets being sorted,
-  // since this is an implementation detail not part of the specification.
   void _fill_dictionary(const ValueColumn<T>& value_column) {
     std::set<T> dict;
     for (size_t index = 0; index < value_column.size(); ++index) {
       dict.insert(type_cast<T>(value_column[index]));
     }
     _dictionary = std::make_shared<std::vector<T>>(dict.cbegin(), dict.cend());
-    std::sort(_dictionary->begin(), _dictionary->end());
   }
 
   // Create attribute vector capable of taking num_values entries
@@ -130,7 +126,7 @@ class DictionaryColumn : public BaseColumn {
   // Fill attribute vector using values from value_column and value ids from dictionary
   void _fill_attribute_vector(const ValueColumn<T>& value_column) {
     for (size_t index = 0; index < value_column.size(); ++index) {
-      const auto it = std::find(_dictionary->cbegin(), _dictionary->cend(), type_cast<T>(value_column[index]));
+      const auto it = std::lower_bound(_dictionary->cbegin(), _dictionary->cend(), type_cast<T>(value_column[index]));
       Assert(it != _dictionary->cend(), "Dictionary creation or lookup failed");
       const ValueID value_id = ValueID(it - _dictionary->cbegin());
       _attribute_vector->set(index, value_id);
